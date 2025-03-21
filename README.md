@@ -1,2 +1,2 @@
 # pascal_compiler
-pascal compiler made in python
+Pascal compiler made in python
