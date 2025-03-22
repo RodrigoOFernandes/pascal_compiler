@@ -20,12 +20,14 @@ reserved = {
     'div': 'DIV',
     'do': 'DO',
     'mod': 'MOD',
+    'of': 'OF',
+    'array': 'ARRAY',
 }
 
 tokens = [
     'SEMICOLON', 'LPAREN', 'RPAREN', 'POINT', 'COMMA', 'STRING', 'ID',
     'COLON', 'ASSIGN', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'NUMBER', 'BOOL',
-    'LESSEQUAL', 'EQUALS', 
+    'LESSEQUAL', 'GREATERTHAN', 'GREATEREQUAL', 'DIFFERENT', 'LESSTHAN', 'EQUALS', 'LBRACKET', 'RBRACKET', 'RANGE', 
 ] + list(reserved.values())
 
 t_SEMICOLON = r';'
@@ -35,12 +37,19 @@ t_RPAREN = r'\)'
 t_POINT = r'\.'
 t_COLON = r':'
 t_LESSEQUAL = r'<='
+t_LESSTHAN = r'<'
+t_GREATERTHAN = r'>'
+t_GREATEREQUAL = r'>='
+t_DIFFERENT = r'<>'
 t_ASSIGN = r':='
 t_EQUALS = r'='
 t_PLUS = r'\+'
 t_MINUS = r'-'
 t_TIMES = r'\*'
 t_DIVIDE = r'/'
+t_LBRACKET = r'\['
+t_RBRACKET = r'\]'
+t_RANGE = r'\.\.'
 
 def t_STRING(t):
     r"'[^']*'"
@@ -48,7 +57,7 @@ def t_STRING(t):
     return t
 
 def t_BOOL(t):
-    r'\btrue\b|\bfalse\b'
+    r'true|false'
     if t.value == 'true':
         t.value = True
     else:
@@ -66,7 +75,7 @@ def t_NUMBER(t):
     return t
 
 def t_COMMENT(t):
-    r'\{[^}]*\}'
+    r'\{[^}]*\}|\(\*[^*]*\*\)'
     pass  
 
 def t_newline(t):
