@@ -22,12 +22,21 @@ reserved = {
     'mod': 'MOD',
     'of': 'OF',
     'array': 'ARRAY',
-}
+    'break': 'BERAK',
+    'case': 'CASE',
+    'const': 'CONST',
+    'continue': 'CONTINUE',
+    'or': 'OR',
+    'string': 'STRING',
+    'type': 'TYPE',
+    'xor': 'XOR',
+    }
 
 tokens = [
-    'SEMICOLON', 'LPAREN', 'RPAREN', 'POINT', 'COMMA', 'STRING', 'ID',
+    'SEMICOLON', 'LPAREN', 'RPAREN', 'POINT', 'COMMA', 'PHRASE', 'ID',
     'COLON', 'ASSIGN', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'NUMBER', 'BOOL',
-    'LESSEQUAL', 'GREATERTHAN', 'GREATEREQUAL', 'DIFFERENT', 'LESSTHAN', 'EQUALS', 'LBRACKET', 'RBRACKET', 'RANGE', 
+    'LESSEQUAL', 'GREATERTHAN', 'GREATEREQUAL', 'DIFFERENT', 'LESSTHAN',
+    'EQUALS', 'LBRACKET', 'RBRACKET', 'RANGE', 
 ] + list(reserved.values())
 
 t_SEMICOLON = r';'
@@ -51,7 +60,7 @@ t_LBRACKET = r'\['
 t_RBRACKET = r'\]'
 t_RANGE = r'\.\.'
 
-def t_STRING(t):
+def t_PHRASE(t):
     r"'[^']*'"
     t.value = t.value[1:-1] #removes quotes from string
     return t
