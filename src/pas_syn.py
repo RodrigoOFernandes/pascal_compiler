@@ -5,9 +5,9 @@ from pasAnalex import tokens
 GRAMMAR:
 
 program: PROGRAM ID SEMICOLON routine DOT
-        |PROGRAM ID SEMICOLON routine
-        |PROGRAM ID routine DOT
-        |PROGRAM ID routine
+        |PROGRAM ID SEMICOLON routine  #isto é erro sintatico
+        |PROGRAM ID routine DOT #erro sintatico  
+        |PROGRAM ID routine  #erro sintatico
 
 routine: routine_head routine_body
 
