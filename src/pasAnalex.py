@@ -2,6 +2,8 @@ import ply.lex as lex
 
 reserved = {
     'program': 'PROGRAM',
+    'funcion': 'FUNCION',
+    'procedure': 'PROCEDURE',
     'var': 'VAR',
     'begin': 'BEGIN',
     'end': 'END',
@@ -10,6 +12,7 @@ reserved = {
     'for': 'FOR',
     'to': 'TO',
     'do': 'DO',
+    'downto': 'DOWNTO',
     'integer': 'INTEGER',
     'boolean': 'BOOLEAN',
     'if': 'IF',
@@ -22,7 +25,7 @@ reserved = {
     'mod': 'MOD',
     'of': 'OF',
     'array': 'ARRAY',
-    'break': 'BERAK',
+    'break': 'BREAK',
     'case': 'CASE',
     'const': 'CONST',
     'continue': 'CONTINUE',
@@ -33,18 +36,19 @@ reserved = {
     }
 
 tokens = [
-    'SEMICOLON', 'LPAREN', 'RPAREN', 'POINT', 'COMMA', 'PHRASE', 'ID',
+    'SEMICOLON', 'LPAREN', 'RPAREN', 'DOT', 'COMMA', 'PHRASE', 'ID',
     'COLON', 'ASSIGN', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'NUMBER', 'BOOL',
     'LESSEQUAL', 'GREATERTHAN', 'GREATEREQUAL', 'DIFFERENT', 'LESSTHAN',
     'EQUALS', 'LBRACKET', 'RBRACKET', 'RANGE', 
 ] + list(reserved.values())
 
-t_SEMICOLON = r';'
-t_COMMA = r','
-t_LPAREN = r'\('
-t_RPAREN = r'\)'
-t_POINT = r'\.'
-t_COLON = r':'
+# Expressões Ariméticas
+t_PLUS = r'\+'
+t_MINUS = r'-'
+t_TIMES = r'\*'
+t_DIVIDE = r'/'
+
+# Expressões Relacionais
 t_LESSEQUAL = r'<='
 t_LESSTHAN = r'<'
 t_GREATERTHAN = r'>'
@@ -52,13 +56,17 @@ t_GREATEREQUAL = r'>='
 t_DIFFERENT = r'<>'
 t_ASSIGN = r':='
 t_EQUALS = r'='
-t_PLUS = r'\+'
-t_MINUS = r'-'
-t_TIMES = r'\*'
-t_DIVIDE = r'/'
+
+# Simbolos
+t_SEMICOLON = r';'
+t_COMMA = r','
 t_LBRACKET = r'\['
 t_RBRACKET = r'\]'
 t_RANGE = r'\.\.'
+t_DOT = r'\.'
+t_LPAREN = r'\('
+t_RPAREN = r'\)'
+t_COLON = r':'
 
 def t_PHRASE(t):
     r"'[^']*'"
@@ -79,8 +87,11 @@ def t_ID(t):
     return t
 
 def t_NUMBER(t):
-    r'\d+'
-    t.value = int(t.value)  
+    r'\d+(\.\d+)?([eE][+-]?\d+)?'
+    if '.' in t.value or 'e' in t.value or 'E' in t.value:
+        t.value = float(t.value) 
+    else:
+        t.value = int(t.value) 
     return t
 
 def t_COMMENT(t):
