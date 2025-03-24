@@ -2,7 +2,7 @@ import ply.lex as lex
 
 reserved = {
     'program': 'PROGRAM',
-    'funcion': 'FUNCION',
+    'function': 'FUNCION',
     'procedure': 'PROCEDURE',
     'var': 'VAR',
     'begin': 'BEGIN',
@@ -10,11 +10,18 @@ reserved = {
     'writeln': 'WRITELN',
     'readln': 'READLN',
     'for': 'FOR',
+    'not': 'NOT',
     'to': 'TO',
     'do': 'DO',
+    'repeat': 'REPEAT',
+    'until': 'UNTIL',
+    'set': 'SET',
+    'uses': 'USES',
+    'label': 'LABEL',
+    'with': 'WITH',
+    'shl': 'SHL',
+    'shr': 'SHR',
     'downto': 'DOWNTO',
-    'integer': 'INTEGER',
-    'boolean': 'BOOLEAN',
     'if': 'IF',
     'then': 'THEN',
     'else': 'ELSE',
@@ -33,7 +40,7 @@ reserved = {
     'string': 'STRING',
     'type': 'TYPE',
     'xor': 'XOR',
-    }
+}
 
 tokens = [
     'SEMICOLON', 'LPAREN', 'RPAREN', 'DOT', 'COMMA', 'PHRASE', 'ID',
