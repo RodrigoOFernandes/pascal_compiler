@@ -1,38 +1,50 @@
 import ply.lex as lex
 
 reserved = {
+    
     'program': 'PROGRAM',
-    'funcion': 'FUNCION',
-    'procedure': 'PROCEDURE',
     'var': 'VAR',
     'begin': 'BEGIN',
     'end': 'END',
-    'writeln': 'WRITELN',
-    'readln': 'READLN',
-    'for': 'FOR',
-    'to': 'TO',
-    'do': 'DO',
-    'downto': 'DOWNTO',
-    'integer': 'INTEGER',
-    'boolean': 'BOOLEAN',
+    
     'if': 'IF',
     'then': 'THEN',
     'else': 'ELSE',
+    'for': 'FOR',
     'while': 'WHILE',
-    'and': 'AND',
-    'div': 'DIV',
+    'repeat': 'REPEAT',
+    'to': 'TO',
     'do': 'DO',
-    'mod': 'MOD',
-    'of': 'OF',
-    'array': 'ARRAY',
-    'break': 'BREAK',
-    'case': 'CASE',
-    'const': 'CONST',
-    'continue': 'CONTINUE',
+    'downto': 'DOWNTO',
+    'until': 'UNTIL',
+    
+    
+    'and': 'AND',
     'or': 'OR',
-    'string': 'STRING',
-    'type': 'TYPE',
+    'not': 'NOT',
     'xor': 'XOR',
+    'of': 'OF',
+    'case': 'CASE',
+    
+    'div': 'DIV',
+    'mod': 'MOD',
+    
+    
+    'function': 'FUNCTION',
+    'procedure': 'PROCEDURE',
+    
+    'writeln': 'WRITELN',
+    'readln': 'READLN',
+    'break': 'BREAK',
+    'continue': 'CONTINUE',
+    
+    'real': 'REAL',
+    'integer': 'INTEGER',
+    'boolean': 'BOOLEAN',
+    'string': 'STRING',
+    'array': 'ARRAY',
+    'const': 'CONST',
+    'type': 'TYPE',
     }
 
 tokens = [
