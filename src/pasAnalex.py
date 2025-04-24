@@ -1,50 +1,66 @@
 import ply.lex as lex
 
 reserved = {
+    
     'program': 'PROGRAM',
     'var': 'VAR',
     'begin': 'BEGIN',
     'end': 'END',
-    'writeln': 'WRITELN',
-    'readln': 'READLN',
-    'for': 'FOR',
-    'to': 'TO',
-    'do': 'DO',
-    'integer': 'INTEGER',
-    'boolean': 'BOOLEAN',
+    
     'if': 'IF',
     'then': 'THEN',
     'else': 'ELSE',
+    'for': 'FOR',
     'while': 'WHILE',
-    'and': 'AND',
-    'div': 'DIV',
+    'repeat': 'REPEAT',
+    'to': 'TO',
     'do': 'DO',
-    'mod': 'MOD',
-    'of': 'OF',
-    'array': 'ARRAY',
-    'break': 'BERAK',
-    'case': 'CASE',
-    'const': 'CONST',
-    'continue': 'CONTINUE',
+    'downto': 'DOWNTO',
+    'until': 'UNTIL',
+    
+    
+    'and': 'AND',
     'or': 'OR',
-    'string': 'STRING',
-    'type': 'TYPE',
+    'not': 'NOT',
     'xor': 'XOR',
+    'of': 'OF',
+    'case': 'CASE',
+    
+    'div': 'DIV',
+    'mod': 'MOD',
+    
+    
+    'function': 'FUNCTION',
+    'procedure': 'PROCEDURE',
+    
+    'writeln': 'WRITELN',
+    'readln': 'READLN',
+    'break': 'BREAK',
+    'continue': 'CONTINUE',
+    
+    'real': 'REAL',
+    'integer': 'INTEGER',
+    'boolean': 'BOOLEAN',
+    'string': 'STRING',
+    'array': 'ARRAY',
+    'const': 'CONST',
+    'type': 'TYPE',
     }
 
 tokens = [
-    'SEMICOLON', 'LPAREN', 'RPAREN', 'POINT', 'COMMA', 'PHRASE', 'ID',
+    'SEMICOLON', 'LPAREN', 'RPAREN', 'DOT', 'COMMA', 'PHRASE', 'ID',
     'COLON', 'ASSIGN', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'NUMBER', 'BOOL',
     'LESSEQUAL', 'GREATERTHAN', 'GREATEREQUAL', 'DIFFERENT', 'LESSTHAN',
     'EQUALS', 'LBRACKET', 'RBRACKET', 'RANGE', 
 ] + list(reserved.values())
 
-t_SEMICOLON = r';'
-t_COMMA = r','
-t_LPAREN = r'\('
-t_RPAREN = r'\)'
-t_POINT = r'\.'
-t_COLON = r':'
+# Expressões Ariméticas
+t_PLUS = r'\+'
+t_MINUS = r'-'
+t_TIMES = r'\*'
+t_DIVIDE = r'/'
+
+# Expressões Relacionais
 t_LESSEQUAL = r'<='
 t_LESSTHAN = r'<'
 t_GREATERTHAN = r'>'
@@ -52,13 +68,17 @@ t_GREATEREQUAL = r'>='
 t_DIFFERENT = r'<>'
 t_ASSIGN = r':='
 t_EQUALS = r'='
-t_PLUS = r'\+'
-t_MINUS = r'-'
-t_TIMES = r'\*'
-t_DIVIDE = r'/'
+
+# Simbolos
+t_SEMICOLON = r';'
+t_COMMA = r','
 t_LBRACKET = r'\['
 t_RBRACKET = r'\]'
 t_RANGE = r'\.\.'
+t_DOT = r'\.'
+t_LPAREN = r'\('
+t_RPAREN = r'\)'
+t_COLON = r':'
 
 def t_PHRASE(t):
     r"'[^']*'"
@@ -79,8 +99,11 @@ def t_ID(t):
     return t
 
 def t_NUMBER(t):
-    r'\d+'
-    t.value = int(t.value)  
+    r'\d+(\.\d+)?([eE][+-]?\d+)?'
+    if '.' in t.value or 'e' in t.value or 'E' in t.value:
+        t.value = float(t.value) 
+    else:
+        t.value = int(t.value) 
     return t
 
 def t_COMMENT(t):
