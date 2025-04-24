@@ -16,8 +16,6 @@ precedence = (
 
 def p_program(t):
     'program : header SEMICOLON block DOT'
-    t[0] = Program(t[1], t[3])
-    print("Program:", t[1], t[3])
 
 def p_header(t):
     'header : PROGRAM ID'
