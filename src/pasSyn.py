@@ -1,6 +1,7 @@
 import sys
 from pasAnalex import *
 from ply import yacc
+from ast_nodes import *
 
 
 start = 'program'
@@ -15,7 +16,8 @@ precedence = (
 
 def p_program(t):
     'program : header SEMICOLON block DOT'
-    pass
+    t[0] = Program(t[1], t[3])
+    print("Program:", t[1], t[3])
 
 def p_header(t):
     'header : PROGRAM ID'
