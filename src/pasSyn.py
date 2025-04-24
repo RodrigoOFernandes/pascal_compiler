@@ -1,8 +1,6 @@
 import sys
 from pasAnalex import *
 from ply import yacc
-from ast_nodes import *
-
 
 start = 'program'
 
