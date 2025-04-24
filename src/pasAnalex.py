@@ -22,7 +22,6 @@ reserved = {
     'and': 'AND',
     'or': 'OR',
     'not': 'NOT',
-    'xor': 'XOR',
     'of': 'OF',
     'case': 'CASE',
     
@@ -43,8 +42,6 @@ reserved = {
     'boolean': 'BOOLEAN',
     'string': 'STRING',
     'array': 'ARRAY',
-    'const': 'CONST',
-    'type': 'TYPE',
     }
 
 tokens = [

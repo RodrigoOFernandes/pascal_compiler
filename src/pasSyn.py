@@ -1,7 +1,6 @@
 import sys
 from pasAnalex import *
 from ply import yacc
-from ast_nodes import *
 
 
 start = 'program'
@@ -16,8 +15,7 @@ precedence = (
 
 def p_program(t):
     'program : header SEMICOLON block DOT'
-    t[0] = Program(t[1], t[3])
-    print("Program:", t[1], t[3])
+    pass
 
 def p_header(t):
     'header : PROGRAM ID'
@@ -117,8 +115,47 @@ def p_statement(t):
                  | repeat_statement
                  | for_statement
                  | procedure_or_function_call
+                 | writeln_statement
+                 | readln_statement
+                 | break_statement
+                 | continue_statement
+                 | case_statement
                  | """
     pass
+
+def p_case_statement(t):
+    """case_statement : CASE expression OF case_list END"""
+    pass
+
+def p_case_list(t):
+    """case_list : case_option SEMICOLON case_list
+                 | case_option SEMICOLON"""
+    pass
+def p_case_option(t):
+    """case_option : NUMBER COLON statement
+                   | BOOL COLON statement
+                   | PHRASE COLON statement
+                   | ID COLON statement"""
+    pass
+
+def p_writeln_statement(t):
+    """writeln_statement : WRITELN LPAREN param_list RPAREN
+                          | WRITELN LPAREN RPAREN"""
+    pass
+
+def p_readln_statement(t):
+    """readln_statement : READLN LPAREN id_list RPAREN
+                        | READLN LPAREN RPAREN"""
+    pass
+
+def p_break_statement(t):
+    """break_statement : BREAK SEMICOLON"""
+    pass
+
+def p_continue_statement(t):
+    """continue_statement : CONTINUE SEMICOLON"""
+    pass
+
 
 def p_procedure_or_function_call(t):
     """procedure_or_function_call : ID LPAREN param_list RPAREN
