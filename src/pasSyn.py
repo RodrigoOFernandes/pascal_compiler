@@ -1,6 +1,7 @@
 import sys
 from pasAnalex import *
 from ply import yacc
+from AST import *
 
 start = 'program'
 
@@ -28,6 +29,7 @@ def p_variable_declaration_part(t):
     """variable_declaration_part : VAR variable_declaration_list
                                   | """
     pass
+
 
 def p_variable_declaration_list(t):
     """variable_declaration_list : variable_declaration variable_declaration_list
@@ -64,6 +66,7 @@ def p_procedure_heading(t):
 
 def p_function_declaration(t):
     """function_declaration : function_heading SEMICOLON block"""
+    name, params, return_type = t[1]
     pass
 
 def p_function_heading(t):
@@ -130,6 +133,7 @@ def p_case_list(t):
     """case_list : case_option SEMICOLON case_list
                  | case_option SEMICOLON"""
     pass
+    
 def p_case_option(t):
     """case_option : NUMBER COLON statement
                    | BOOL COLON statement
@@ -230,13 +234,18 @@ def p_sign(t):
             | GREATEREQUAL"""
     pass
 
+def p_length_function(t):
+    """length_function : LENGTH LPAREN expression RPAREN"""
+    pass
+
 def p_element(t):
     """element : ID
                | NUMBER
                | BOOL
                | PHRASE
                | LPAREN expression RPAREN
-               | NOT element"""
+               | NOT element
+               | length_function"""
     pass
 
 def p_error(t):
