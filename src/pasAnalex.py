@@ -1,6 +1,5 @@
 import ply.lex as lex
 
-# Lista de tokens
 tokens = [
     'PROGRAM', 'VAR', 'BEGIN', 'END', 'IF', 'THEN', 'ELSE', 'FOR', 'WHILE',
     'REPEAT', 'TO', 'DO', 'DOWNTO', 'UNTIL', 'AND', 'OR', 'NOT', 'OF',
