@@ -42,7 +42,9 @@ def p_variable_declaration(t):
 
 def p_id_list(t):
     """id_list : ID
-               | ID COMMA id_list"""
+               | ID LBRACKET expression RBRACKET 
+               | ID COMMA id_list
+               | ID LBRACKET expression RBRACKET COMMA id_list"""
     pass
 
 def p_procedure_or_function(t):
@@ -55,6 +57,7 @@ def p_proc_or_func_declaration(t):
                                  | function_declaration"""
     pass
 
+# Modificar para usar subblock
 def p_procedure_declaration(t):
     """procedure_declaration : procedure_heading SEMICOLON block"""
     pass
@@ -66,7 +69,6 @@ def p_procedure_heading(t):
 
 def p_function_declaration(t):
     """function_declaration : function_heading SEMICOLON block"""
-    name, params, return_type = t[1]
     pass
 
 def p_function_heading(t):
@@ -245,7 +247,8 @@ def p_element(t):
                | PHRASE
                | LPAREN expression RPAREN
                | NOT element
-               | length_function"""
+               | length_function
+               | ID LBRACKET expression RBRACKET""" # indices de array
     pass
 
 def p_error(t):
