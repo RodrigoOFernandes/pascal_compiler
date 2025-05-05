@@ -31,7 +31,7 @@ def p_variable_declaration_part(t):
 
 
 def p_variable_declaration_list(t):
-    """variable_declaration_list : variable_declaration variable_declaration_list
+    """variable_declaration_list : variable_declaration_list variable_declaration 
                                   | variable_declaration"""
     pass
 

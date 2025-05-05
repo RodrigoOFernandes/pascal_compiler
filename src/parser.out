@@ -8,7 +8,7 @@ Rule 2     header -> PROGRAM ID
 Rule 3     block -> variable_declaration_part procedure_or_function statement_part
 Rule 4     variable_declaration_part -> VAR variable_declaration_list
 Rule 5     variable_declaration_part -> <empty>
-Rule 6     variable_declaration_list -> variable_declaration variable_declaration_list
+Rule 6     variable_declaration_list -> variable_declaration_list variable_declaration
 Rule 7     variable_declaration_list -> variable_declaration
 Rule 8     variable_declaration -> id_list COLON type SEMICOLON
 Rule 9     id_list -> ID
@@ -306,7 +306,7 @@ state 7
 state 8
 
     (4) variable_declaration_part -> VAR . variable_declaration_list
-    (6) variable_declaration_list -> . variable_declaration variable_declaration_list
+    (6) variable_declaration_list -> . variable_declaration_list variable_declaration
     (7) variable_declaration_list -> . variable_declaration
     (8) variable_declaration -> . id_list COLON type SEMICOLON
     (9) id_list -> . ID
@@ -404,32 +404,30 @@ state 17
 state 18
 
     (4) variable_declaration_part -> VAR variable_declaration_list .
-
-    PROCEDURE       reduce using rule 4 (variable_declaration_part -> VAR variable_declaration_list .)
-    FUNCTION        reduce using rule 4 (variable_declaration_part -> VAR variable_declaration_list .)
-    BEGIN           reduce using rule 4 (variable_declaration_part -> VAR variable_declaration_list .)
-
-
-state 19
-
-    (6) variable_declaration_list -> variable_declaration . variable_declaration_list
-    (7) variable_declaration_list -> variable_declaration .
-    (6) variable_declaration_list -> . variable_declaration variable_declaration_list
-    (7) variable_declaration_list -> . variable_declaration
+    (6) variable_declaration_list -> variable_declaration_list . variable_declaration
     (8) variable_declaration -> . id_list COLON type SEMICOLON
     (9) id_list -> . ID
     (10) id_list -> . ID LBRACKET expression RBRACKET
     (11) id_list -> . ID COMMA id_list
     (12) id_list -> . ID LBRACKET expression RBRACKET COMMA id_list
 
+    PROCEDURE       reduce using rule 4 (variable_declaration_part -> VAR variable_declaration_list .)
+    FUNCTION        reduce using rule 4 (variable_declaration_part -> VAR variable_declaration_list .)
+    BEGIN           reduce using rule 4 (variable_declaration_part -> VAR variable_declaration_list .)
+    ID              shift and go to state 21
+
+    variable_declaration           shift and go to state 36
+    id_list                        shift and go to state 20
+
+state 19
+
+    (7) variable_declaration_list -> variable_declaration .
+
+    ID              reduce using rule 7 (variable_declaration_list -> variable_declaration .)
     PROCEDURE       reduce using rule 7 (variable_declaration_list -> variable_declaration .)
     FUNCTION        reduce using rule 7 (variable_declaration_list -> variable_declaration .)
     BEGIN           reduce using rule 7 (variable_declaration_list -> variable_declaration .)
-    ID              shift and go to state 21
 
-    variable_declaration           shift and go to state 19
-    variable_declaration_list      shift and go to state 36
-    id_list                        shift and go to state 20
 
 state 20
 
@@ -659,11 +657,12 @@ state 35
 
 state 36
 
-    (6) variable_declaration_list -> variable_declaration variable_declaration_list .
+    (6) variable_declaration_list -> variable_declaration_list variable_declaration .
 
-    PROCEDURE       reduce using rule 6 (variable_declaration_list -> variable_declaration variable_declaration_list .)
-    FUNCTION        reduce using rule 6 (variable_declaration_list -> variable_declaration variable_declaration_list .)
-    BEGIN           reduce using rule 6 (variable_declaration_list -> variable_declaration variable_declaration_list .)
+    ID              reduce using rule 6 (variable_declaration_list -> variable_declaration_list variable_declaration .)
+    PROCEDURE       reduce using rule 6 (variable_declaration_list -> variable_declaration_list variable_declaration .)
+    FUNCTION        reduce using rule 6 (variable_declaration_list -> variable_declaration_list variable_declaration .)
+    BEGIN           reduce using rule 6 (variable_declaration_list -> variable_declaration_list variable_declaration .)
 
 
 state 37
