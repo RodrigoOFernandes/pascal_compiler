@@ -1,7 +1,6 @@
 import sys
 from pasAnalex import *
 from ply import yacc
-from AST import *
 
 start = 'program'
 
