@@ -1,5 +1,6 @@
 import sys
 from pasAnalex import *
+from pasSemantic import *
 from ply import yacc
 
 start = 'program'
@@ -12,13 +13,21 @@ precedence = (
     ('left', 'OR', 'AND'),
 )
 
+symbol_table = SymbolTable()
+
 def p_program(t):
     'program : header SEMICOLON block DOT'
+    if not symbol_table.report_errors():
+        print("Programa contém erros semânticos!")
+    else:
+        print("Análise semântica concluída com sucesso!")
     print(f"Program: {t[1]} ; {t[3]} .")
 
 def p_header(t):
     'header : PROGRAM ID'
     print(f"Header: PROGRAM {t[2]}")
+    symbol_table.add_symbol(t[2], 'program', None, None, t.lineno(2))
+    t[0] = t[2]
     t[0] = f"PROGRAM {t[2]}"
 
 def p_block(t):
@@ -54,6 +63,16 @@ def p_variable_declaration_list(t):
 def p_variable_declaration(t):
     """variable_declaration : id_list COLON type SEMICOLON"""
     print(f"Variable declaration: {t[1]} : {t[3]} ;")
+    
+    id_names = t[1].replace(',', ' ').replace('[', ' ').replace(']', ' ').split()
+    ids = [id_name for id_name in id_names if id_name.isalpha()]
+    
+    for id_name in ids:
+        if symbol_table.lookup(id_name) and id_name in symbol_table.scopes[-1]:
+            symbol_table.add_error(f"Variável '{id_name}' já declarada neste escopo", t.lineno(1))
+        else:
+            symbol_table.add_symbol(id_name, 'variable', t[3], None, t.lineno(1))
+    
     t[0] = f"{t[1]} : {t[3]};"
 
 def p_id_list(t):
@@ -93,6 +112,12 @@ def p_proc_or_func_declaration(t):
 def p_procedure_declaration(t):
     """procedure_declaration : procedure_heading SEMICOLON block"""
     print(f"Procedure declaration: {t[1]} ; {t[3]}")
+    
+    # Saindo do escopo do procedimento
+    symbol_table.exit_scope()
+    # Resetar o tipo de retorno da função atual
+    symbol_table.current_function = None
+    
     t[0] = f"{t[1]}; {t[3]}"
 
 def p_procedure_heading(t):
@@ -100,14 +125,44 @@ def p_procedure_heading(t):
                         | PROCEDURE ID LPAREN parameter_list RPAREN"""
     if len(t) == 3:
         print(f"Procedure heading: PROCEDURE {t[2]}")
+        
+        symbol_table.add_symbol(t[2], 'procedure', None, [], t.lineno(2))
+        
+        symbol_table.enter_scope()
+        symbol_table.current_function = {'name': t[2], 'kind': 'procedure', 'return_type': None}
+        
         t[0] = f"PROCEDURE {t[2]}"
     else:
         print(f"Procedure heading with params: PROCEDURE {t[2]}({t[4]})")
+        
+        params = []
+        param_info = t[4].split(',')
+        for param in param_info:
+            if ':' in param:
+                param_name, param_type = param.split(':')
+                param_name = param_name.strip()
+                param_type = param_type.strip()
+                params.append(Symbol(param_name, 'parameter', param_type))
+        
+        symbol_table.add_symbol(t[2], 'procedure', None, params, t.lineno(2))
+        
+        symbol_table.enter_scope()
+        symbol_table.current_function = {'name': t[2], 'kind': 'procedure', 'return_type': None}
+        
+        for param in params:
+            symbol_table.add_symbol(param.name, 'parameter', param.data_type, None, t.lineno(2))
+        
         t[0] = f"PROCEDURE {t[2]}({t[4]})"
 
 def p_function_declaration(t):
     """function_declaration : function_heading SEMICOLON block"""
     print(f"Function declaration: {t[1]} ; {t[3]}")
+    
+    # Saindo do escopo da função
+    symbol_table.exit_scope()
+    # Resetar o tipo de retorno da função atual
+    symbol_table.current_function = None
+    
     t[0] = f"{t[1]}; {t[3]}"
 
 def p_function_heading(t):
@@ -116,12 +171,44 @@ def p_function_heading(t):
                         | FUNCTION ID LPAREN parameter_list RPAREN COLON type"""
     if len(t) == 3:
         print(f"Function heading: FUNCTION {t[2]}")
+        # Caso inválido, funções precisam de um identificador
+        symbol_table.add_error("Função precisa de um identificador", t.lineno(1))
         t[0] = f"FUNCTION {t[2]}"
     elif len(t) == 5:
         print(f"Function heading: FUNCTION {t[2]} : {t[4]}")
+        
+        # Registrar função na tabela de símbolos
+        symbol_table.add_symbol(t[2], 'function', t[4], [], t.lineno(2))
+        
+        # Criar um novo escopo para a função
+        symbol_table.enter_scope()
+        symbol_table.current_function = {'name': t[2], 'kind': 'function', 'return_type': t[4]}
+        
         t[0] = f"FUNCTION {t[2]} : {t[4]}"
     else:
         print(f"Function heading with params: FUNCTION {t[2]}({t[4]}) : {t[7]}")
+        
+        # Processar parâmetros
+        params = []
+        param_info = t[4].split(',')
+        for param in param_info:
+            if ':' in param:
+                param_name, param_type = param.split(':')
+                param_name = param_name.strip()
+                param_type = param_type.strip()
+                params.append(Symbol(param_name, 'parameter', param_type))
+        
+        # Registrar função na tabela de símbolos
+        symbol_table.add_symbol(t[2], 'function', t[7], params, t.lineno(2))
+        
+        # Criar um novo escopo para a função
+        symbol_table.enter_scope()
+        symbol_table.current_function = {'name': t[2], 'kind': 'function', 'return_type': t[7]}
+        
+        # Registrar parâmetros no escopo da função
+        for param in params:
+            symbol_table.add_symbol(param.name, 'parameter', param.data_type, None, t.lineno(2))
+        
         t[0] = f"FUNCTION {t[2]}({t[4]}) : {t[7]}"
 
 def p_parameter_list(t):
@@ -151,7 +238,20 @@ def p_type(t):
 def p_array_type(t):
     """array_type : ARRAY LBRACKET range RBRACKET OF type"""
     print(f"Array type: ARRAY [{t[3]}] OF {t[6]}")
-    t[0] = f"ARRAY [{t[3]}] OF {t[6]}"
+    # Criar tipo de array para análise semântica
+    range_parts = t[3].split('..')
+    if len(range_parts) == 2:
+        try:
+            start_range = int(range_parts[0])
+            end_range = int(range_parts[1])
+            t[0] = ArrayType(t[6], start_range, end_range)
+        except ValueError:
+            # Não conseguiu converter para inteiros
+            symbol_table.add_error(f"Índices do array devem ser inteiros: {t[3]}", t.lineno(1))
+            t[0] = f"ARRAY [{t[3]}] OF {t[6]}"
+    else:
+        symbol_table.add_error(f"Formato inválido para faixa do array: {t[3]}", t.lineno(1))
+        t[0] = f"ARRAY [{t[3]}] OF {t[6]}"
 
 def p_range(t):
     """range : expression RANGE expression"""
@@ -197,6 +297,12 @@ def p_statement(t):
 def p_case_statement(t):
     """case_statement : CASE expression OF case_list END"""
     print(f"Case statement: CASE {t[2]} OF {t[4]} END")
+    
+    # Verificar se a expressão do CASE é de um tipo válido
+    expr_type = symbol_table.analyze_expression(t[2], symbol_table, t.lineno(1))
+    if expr_type not in ['integer', 'char', 'boolean', 'string']:
+        symbol_table.add_error(f"Expressão do CASE deve ser do tipo inteiro, caractere, booleano ou string, mas é {expr_type}", t.lineno(1))
+    
     t[0] = f"CASE {t[2]} OF {t[4]} END"
 
 def p_case_list(t):
