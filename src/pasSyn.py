@@ -22,9 +22,14 @@ def p_header(t):
     t[0] = f"PROGRAM {t[2]}"
 
 def p_block(t):
-    """block : variable_declaration_part procedure_or_function statement_part"""
-    print(f"Block: {t[1]} {t[2]} {t[3]}")
-    t[0] = f"{t[1]} {t[2]} {t[3]}"
+    """block : variable_declaration_part procedure_or_function statement_part 
+               | variable_declaration_part procedure_or_function variable_declaration_part statement_part"""
+    if len(t) == 4:
+        print(f"Block: {t[1]} {t[2]} {t[3]}")
+        t[0] = f"{t[1]} {t[2]} {t[3]}"
+    else:
+        print(f"Block with additional var declarations: {t[1]} {t[2]} {t[3]} {t[4]}")
+        t[0] = f"{t[1]} {t[2]} {t[3]} {t[4]}"
 
 def p_variable_declaration_part(t):
     """variable_declaration_part : VAR variable_declaration_list
@@ -233,21 +238,25 @@ def p_readln_statement(t):
         t[0] = "READLN()"
 
 def p_break_statement(t):
-    """break_statement : BREAK SEMICOLON"""
-    print("Break statement: BREAK;")
-    t[0] = "BREAK;"
+    """break_statement : BREAK"""
+    print("Break statement: BREAK")
+    t[0] = "BREAK"
 
 def p_continue_statement(t):
-    """continue_statement : CONTINUE SEMICOLON"""
-    print("Continue statement: CONTINUE;")
-    t[0] = "CONTINUE;"
+    """continue_statement : CONTINUE"""
+    print("Continue statement: CONTINUE")
+    t[0] = "CONTINUE"
 
 def p_procedure_or_function_call(t):
     """procedure_or_function_call : ID LPAREN param_list RPAREN
+                                 | ID LPAREN RPAREN
                                  | ID"""
     if len(t) == 5:
         print(f"Procedure/Function call: {t[1]}({t[3]})")
         t[0] = f"{t[1]}({t[3]})"
+    elif len(t) == 4:
+        print(f"Procedure/Function call (no params): {t[1]}()")
+        t[0] = f"{t[1]}()"
     else:
         print(f"ID call: {t[1]}")
         t[0] = t[1]
@@ -298,9 +307,15 @@ def p_for_statement(t):
         t[0] = f"FOR {t[2]} DOWNTO {t[4]} DO {t[6]}"
 
 def p_assignment_statement(t):
-    """assignment_statement : ID ASSIGN expression"""
-    print(f"Assignment: {t[1]} := {t[3]}")
-    t[0] = f"{t[1]} := {t[3]}"
+    """assignment_statement : ID ASSIGN expression
+                            | ID ASSIGN procedure_or_function_call
+                            | ID LBRACKET expression RBRACKET ASSIGN expression"""
+    if len(t) == 4:
+        print(f"Assignment: {t[1]} := {t[3]}")
+        t[0] = f"{t[1]} := {t[3]}"
+    else:
+        print(f"Array assignment: {t[1]}[{t[3]}] := {t[6]}")
+        t[0] = f"{t[1]}[{t[3]}] := {t[6]}"
 
 def p_expression(t):
     """expression : expression and_or expression_m
@@ -371,7 +386,8 @@ def p_element(t):
                | LPAREN expression RPAREN
                | NOT element
                | length_function
-               | ID LBRACKET expression RBRACKET"""
+               | ID LBRACKET expression RBRACKET
+               | procedure_or_function_call"""
     if len(t) == 2:
         print(f"Element: {t[1]}")
         t[0] = t[1]
@@ -381,9 +397,17 @@ def p_element(t):
     elif len(t) == 4:
         print(f"Parenthesized expression: ({t[2]})")
         t[0] = f"({t[2]})"
+    elif len(t) == 5:
+        if t[1] == 'LENGTH':
+            print(f"Length function: LENGTH({t[3]})")
+            t[0] = f"LENGTH({t[3]})"
+        else:
+            print(f"Array element: {t[1]}[{t[3]}]")
+            t[0] = f"{t[1]}[{t[3]}]"
     else:
-        print(f"Array element: {t[1]}[{t[3]}]")
-        t[0] = f"{t[1]}[{t[3]}]"
+        # This should not be reached, but just in case
+        print(f"Unknown element structure")
+        t[0] = "Unknown"
 
 def p_error(t):
     if t:
@@ -391,7 +415,7 @@ def p_error(t):
     else:
         print("Syntax error at EOF")
 
-parser = yacc.yacc()
+parser = yacc.yacc(debug=True)
 
 def main():
     if len(sys.argv) != 2:

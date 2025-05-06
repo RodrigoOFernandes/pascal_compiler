@@ -2,7 +2,7 @@ program SomaArray;
 var
     numeros: array[1..5] of integer;
     i, soma: integer;
-begin
+begin 
     soma := 0;
     writeln('Introduza 5 números inteiros:');
     for i := 1 to 5 do
