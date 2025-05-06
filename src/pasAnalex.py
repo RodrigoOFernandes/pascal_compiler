@@ -36,8 +36,8 @@ t_RANGE = r'\.\.'
 t_DOT = r'\.'
 t_LPAREN = r'\('
 t_RPAREN = r'\)'
-t_COLON = r':'
 t_ASSIGN = r':='
+t_COLON = r':'
 
 # Palavras reservadas (case insensitive)
 def t_PROGRAM(t):
