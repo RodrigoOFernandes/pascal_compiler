@@ -1,6 +1,6 @@
 from ASTNode import *
-
 class ASTOptimizer:
+
     def optimize(self, node):
         if node is None:
             return None

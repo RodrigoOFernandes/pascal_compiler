@@ -3,7 +3,7 @@ import ply.lex as lex
 tokens = [
     'PROGRAM', 'VAR', 'BEGIN', 'END', 'IF', 'THEN', 'ELSE', 'FOR', 'WHILE',
     'REPEAT', 'TO', 'DO', 'DOWNTO', 'UNTIL', 'AND', 'OR', 'NOT', 'OF',
-    'CASE', 'DIV', 'MOD', 'FUNCTION', 'PROCEDURE', 'WRITELN', 'READLN',
+    'CASE', 'DIV', 'MOD', 'FUNCTION', 'PROCEDURE', 'WRITELN', 'WRITE', 'READLN', 'READ',
     'BREAK', 'CONTINUE', 'REAL', 'INTEGER', 'BOOLEAN', 'STRING', 'ARRAY',
     'BOOL', 'LENGTH',
     
@@ -136,8 +136,16 @@ def t_WRITELN(t):
     r'[wW][rR][iI][tT][eE][lL][nN]'
     return t
 
+def t_WRITE(t):
+    r'[wW][rR][iI][tT][eE]'
+    return t
+
 def t_READLN(t):
     r'[rR][eE][aA][dD][lL][nN]'
+    return t
+
+def t_READ(t):
+    r'[rR][eE][aA][dD]'
     return t
 
 def t_BREAK(t):
