@@ -1,5 +1,6 @@
 import sys
 from pasAnalex import *
+from ASTNode import *
 from ply import yacc
 
 start = 'program'
@@ -14,47 +15,42 @@ precedence = (
 
 def p_program(t):
     'program : header SEMICOLON block DOT'
-    print(f"Program: {t[1]} ; {t[3]} .")
+    t[0] = Program(t[1], t[3])
 
 def p_header(t):
     'header : PROGRAM ID'
-    print(f"Header: PROGRAM {t[2]}")
-    t[0] = f"PROGRAM {t[2]}"
+    t[0] = Header(t[2])
 
 def p_block(t):
     """block : variable_declaration_part procedure_or_function statement_part 
                | variable_declaration_part procedure_or_function variable_declaration_part statement_part"""
     if len(t) == 4:
-        print(f"Block: {t[1]} {t[2]} {t[3]}")
-        t[0] = f"{t[1]} {t[2]} {t[3]}"
+        t[0] = Block(t[1], t[2], t[3])
     else:
-        print(f"Block with additional var declarations: {t[1]} {t[2]} {t[3]} {t[4]}")
-        t[0] = f"{t[1]} {t[2]} {t[3]} {t[4]}"
+        t[0] = Block(t[1], t[2], t[4], t[3])
 
 def p_variable_declaration_part(t):
     """variable_declaration_part : VAR variable_declaration_list
                                 | """
     if len(t) > 1:
-        print(f"Variable declaration part: VAR {t[2]}")
-        t[0] = f"VAR {t[2]}"
+        t[0] = VarDeclarationPart(t[2])
     else:
-        print("Empty variable declaration part")
-        t[0] = ""
+        t[0] = VarDeclarationPart()
+
 
 def p_variable_declaration_list(t):
     """variable_declaration_list : variable_declaration_list variable_declaration
                                 | variable_declaration"""
     if len(t) == 3:
-        print(f"Variable declaration list: {t[1]} {t[2]}")
-        t[0] = f"{t[1]} {t[2]}"
+        if isinstance(t[1], list):
+            t[0] = t[1] + [t[2]]
+        else:
+            t[0] = [t[1], t[2]]
     else:
-        print(f"Variable declaration: {t[1]}")
-        t[0] = t[1]
-
+        t[0] = [t[1]]
 def p_variable_declaration(t):
     """variable_declaration : id_list COLON type SEMICOLON"""
-    print(f"Variable declaration: {t[1]} : {t[3]} ;")
-    t[0] = f"{t[1]} : {t[3]};"
+    t[0] = VarDeclaration(t[1], t[3])
 
 def p_id_list(t):
     """id_list : ID
@@ -62,82 +58,79 @@ def p_id_list(t):
                | ID COMMA id_list
                | ID LBRACKET expression RBRACKET COMMA id_list"""
     if len(t) == 2:
-        print(f"ID: {t[1]}")
-        t[0] = t[1]
+        t[0] = [Identifier(t[1])]
     elif len(t) == 5:
-        print(f"Array ID: {t[1]}[{t[3]}]")
-        t[0] = f"{t[1]}[{t[3]}]"
+        t[0] = [ArrayId(t[1], t[3])]
     elif len(t) == 4:
-        print(f"ID list: {t[1]}, {t[3]}")
-        t[0] = f"{t[1]}, {t[3]}"
-    else:
-        print(f"Array ID list: {t[1]}[{t[3]}], {t[6]}")
-        t[0] = f"{t[1]}[{t[3]}], {t[6]}"
+        if isinstance(t[3], list):
+            t[0] = [Identifier(t[1])] + t[3]
+        else:
+            t[0] = [Identifier(t[1]), t[3]]
+    else:  # len(t) == 7
+        if isinstance(t[6], list):
+            t[0] = [ArrayId(t[1], t[3])] + t[6]
+        else:
+            t[0] = [ArrayId(t[1], t[3]), t[6]]
 
 def p_procedure_or_function(t):
     """procedure_or_function : proc_or_func_declaration SEMICOLON procedure_or_function
                             | """
     if len(t) > 1:
-        print(f"Procedure/Function: {t[1]} ; {t[3]}")
-        t[0] = f"{t[1]}; {t[3]}"
+        if isinstance(t[3], list):
+            t[0] = [t[1]] + t[3]
+        else:
+            t[0] = [t[1], t[3]] if t[3] else [t[1]]
     else:
-        print("Empty procedure/function part")
-        t[0] = ""
+        t[0] = []
+
 
 def p_proc_or_func_declaration(t):
     """proc_or_func_declaration : procedure_declaration
                                | function_declaration"""
-    print(f"Proc/Func declaration: {t[1]}")
     t[0] = t[1]
 
 def p_procedure_declaration(t):
     """procedure_declaration : procedure_heading SEMICOLON block"""
-    print(f"Procedure declaration: {t[1]} ; {t[3]}")
-    t[0] = f"{t[1]}; {t[3]}"
+    t[0] = ProcedureDeclaration(t[1], t[3])
 
 def p_procedure_heading(t):
     """procedure_heading : PROCEDURE ID
                         | PROCEDURE ID LPAREN parameter_list RPAREN"""
     if len(t) == 3:
-        print(f"Procedure heading: PROCEDURE {t[2]}")
-        t[0] = f"PROCEDURE {t[2]}"
+        t[0] = ProcedureHeading(t[2])
     else:
-        print(f"Procedure heading with params: PROCEDURE {t[2]}({t[4]})")
-        t[0] = f"PROCEDURE {t[2]}({t[4]})"
+        t[0] = ProcedureHeading(t[2], t[4])
 
 def p_function_declaration(t):
     """function_declaration : function_heading SEMICOLON block"""
-    print(f"Function declaration: {t[1]} ; {t[3]}")
-    t[0] = f"{t[1]}; {t[3]}"
+    t[0] = FunctionDeclaration(t[1], t[3])
 
 def p_function_heading(t):
     """function_heading : FUNCTION type
                         | FUNCTION ID COLON type
                         | FUNCTION ID LPAREN parameter_list RPAREN COLON type"""
     if len(t) == 3:
-        print(f"Function heading: FUNCTION {t[2]}")
-        t[0] = f"FUNCTION {t[2]}"
+        t[0] = FunctionHeading(None, t[2])
     elif len(t) == 5:
-        print(f"Function heading: FUNCTION {t[2]} : {t[4]}")
-        t[0] = f"FUNCTION {t[2]} : {t[4]}"
+        t[0] = FunctionHeading(t[2], t[4])
     else:
-        print(f"Function heading with params: FUNCTION {t[2]}({t[4]}) : {t[7]}")
-        t[0] = f"FUNCTION {t[2]}({t[4]}) : {t[7]}"
+        t[0] = FunctionHeading(t[2], t[7], t[4])
 
 def p_parameter_list(t):
     """parameter_list : parameter COMMA parameter_list
                      | parameter"""
     if len(t) == 4:
-        print(f"Parameter list: {t[1]}, {t[3]}")
-        t[0] = f"{t[1]}, {t[3]}"
+        if isinstance(t[3], list):
+            t[0] = [t[1]] + t[3]
+        else:
+            t[0] = [t[1], t[3]]
     else:
-        print(f"Parameter: {t[1]}")
-        t[0] = t[1]
+        t[0] = [t[1]]
+
 
 def p_parameter(t):
     """parameter : ID COLON type"""
-    print(f"Parameter: {t[1]} : {t[3]}")
-    t[0] = f"{t[1]} : {t[3]}"
+    t[0] = Parameter(t[1], t[3])
 
 def p_type(t):
     """type : REAL
@@ -145,34 +138,33 @@ def p_type(t):
             | BOOLEAN
             | STRING
             | array_type"""
-    print(f"Type: {t[1]}")
-    t[0] = t[1]
+    if isinstance(t[1], ASTNode):
+        t[0] = t[1]
+    else:
+        t[0] = Type(t[1])
 
 def p_array_type(t):
     """array_type : ARRAY LBRACKET range RBRACKET OF type"""
-    print(f"Array type: ARRAY [{t[3]}] OF {t[6]}")
-    t[0] = f"ARRAY [{t[3]}] OF {t[6]}"
+    t[0] = ArrayType(t[3], t[6])
 
 def p_range(t):
     """range : expression RANGE expression"""
-    print(f"Range: {t[1]}..{t[3]}")
-    t[0] = f"{t[1]}..{t[3]}"
 
 def p_statement_part(t):
     """statement_part : BEGIN statement_sequence END"""
-    print(f"Statement part: BEGIN {t[2]} END")
-    t[0] = f"BEGIN {t[2]} END"
+    t[0] = StatementPart(t[2])
 
 def p_statement_sequence(t):
     """statement_sequence : statement SEMICOLON statement_sequence
                          | statement"""
     if len(t) == 4:
-        print(f"Statement sequence: {t[1]} ; {t[3]}")
-        t[0] = f"{t[1]}; {t[3]}"
+        if isinstance(t[3], StatementSequence):
+            t[3].statements.insert(0, t[1])
+            t[0] = t[3]
+        else:
+            t[0] = StatementSequence([t[1], t[3]])
     else:
-        print(f"Statement: {t[1]}")
-        t[0] = t[1]
-
+        t[0] = StatementSequence(t[1])
 def p_statement(t):
     """statement : assignment_statement
                 | statement_part
@@ -188,175 +180,159 @@ def p_statement(t):
                 | case_statement
                 | """
     if len(t) > 1:
-        print(f"Statement: {t[1]}")
         t[0] = t[1]
     else:
-        print("Empty statement")
-        t[0] = ""
+        t[0] = []
 
 def p_case_statement(t):
     """case_statement : CASE expression OF case_list END"""
     print(f"Case statement: CASE {t[2]} OF {t[4]} END")
-    t[0] = f"CASE {t[2]} OF {t[4]} END"
+    t[0] = CaseStatement(t[2], t[4])
 
 def p_case_list(t):
     """case_list : case_option SEMICOLON case_list
                  | case_option SEMICOLON"""
     if len(t) == 4:
-        print(f"Case list: {t[1]} ; {t[3]}")
-        t[0] = f"{t[1]}; {t[3]}"
+        if isinstance(t[3], list):
+            t[0] = [t[1]] + t[3]
+        else:
+            t[0] = [t[1], t[3]]
     else:
-        print(f"Case option: {t[1]} ;")
-        t[0] = f"{t[1]};"
+        t[0] = [t[1]]
+
 
 def p_case_option(t):
     """case_option : NUMBER COLON statement
                   | BOOL COLON statement
                   | PHRASE COLON statement
                   | ID COLON statement"""
-    print(f"Case option: {t[1]} : {t[3]}")
-    t[0] = f"{t[1]} : {t[3]}"
 
+    if t[1].type == 'NUMBER':
+        value = Literal(t[1], 'NUMBER')
+    elif t[1].type == 'BOOL':
+        value = Literal(t[1], 'BOOL')
+    elif t[1].type == 'PHRASE':
+        value = Literal(t[1], 'PHRASE')
+    else:  # ID
+        value = Identifier(t[1])
+    
+    t[0] = CaseOption(value, t[3])
 def p_writeln_statement(t):
     """writeln_statement : WRITELN LPAREN param_list RPAREN
                          | WRITELN LPAREN RPAREN"""
     if len(t) == 5:
-        print(f"Writeln: WRITELN({t[3]})")
-        t[0] = f"WRITELN({t[3]})"
+        t[0] = WritelnStatement(t[3])
     else:
-        print("Writeln: WRITELN()")
-        t[0] = "WRITELN()"
+        t[0] = WritelnStatement()
 
 def p_readln_statement(t):
     """readln_statement : READLN LPAREN id_list RPAREN
                        | READLN LPAREN RPAREN"""
     if len(t) == 5:
-        print(f"Readln: READLN({t[3]})")
-        t[0] = f"READLN({t[3]})"
+        t[0] = ReadlnStatement(t[3])
     else:
-        print("Readln: READLN()")
-        t[0] = "READLN()"
+        t[0] = ReadlnStatement()
+
 
 def p_break_statement(t):
     """break_statement : BREAK"""
     print("Break statement: BREAK")
-    t[0] = "BREAK"
+    t[0] = BreakStatement()
 
 def p_continue_statement(t):
     """continue_statement : CONTINUE"""
-    print("Continue statement: CONTINUE")
-    t[0] = "CONTINUE"
+    t[0] = ContinueStatement()
 
 def p_procedure_or_function_call(t):
     """procedure_or_function_call : ID LPAREN param_list RPAREN
                                  | ID LPAREN RPAREN
                                  | ID"""
     if len(t) == 5:
-        print(f"Procedure/Function call: {t[1]}({t[3]})")
-        t[0] = f"{t[1]}({t[3]})"
+        t[0] = ProcedureCall(t[1], t[3])
     elif len(t) == 4:
-        print(f"Procedure/Function call (no params): {t[1]}()")
-        t[0] = f"{t[1]}()"
+        t[0] = ProcedureCall(t[1])
     else:
-        print(f"ID call: {t[1]}")
-        t[0] = t[1]
+        t[0] = Identifier(t[1])
+
+
 
 def p_param_list(t):
     """param_list : param_list COMMA param
                   | param"""
     if len(t) == 4:
-        print(f"Param list: {t[1]}, {t[3]}")
-        t[0] = f"{t[1]}, {t[3]}"
+        if isinstance(t[1], list):
+            t[0] = t[1] + [t[3]]
+        else:
+            t[0] = [t[1], t[3]]
     else:
-        print(f"Param: {t[1]}")
-        t[0] = t[1]
+        t[0] = [t[1]]
 
 def p_param(t):
     """param : expression"""
-    print(f"Param: {t[1]}")
     t[0] = t[1]
 
 def p_if_statement(t):
     """if_statement : IF expression THEN statement ELSE statement
                     | IF expression THEN statement"""
     if len(t) == 7:
-        print(f"If statement: IF {t[2]} THEN {t[4]} ELSE {t[6]}")
-        t[0] = f"IF {t[2]} THEN {t[4]} ELSE {t[6]}"
+        t[0] = IfStatement(t[2], t[4], t[6])
     else:
-        print(f"If statement: IF {t[2]} THEN {t[4]}")
-        t[0] = f"IF {t[2]} THEN {t[4]}"
+        t[0] = IfStatement(t[2], t[4])
 
 def p_while_statement(t):
     """while_statement : WHILE expression DO statement"""
-    print(f"While statement: WHILE {t[2]} DO {t[4]}")
-    t[0] = f"WHILE {t[2]} DO {t[4]}"
+    t[0] = WhileStatement(t[2], t[4])
 
 def p_repeat_statement(t):
     """repeat_statement : REPEAT statement UNTIL expression"""
-    print(f"Repeat statement: REPEAT {t[2]} UNTIL {t[4]}")
-    t[0] = f"REPEAT {t[2]} UNTIL {t[4]}"
+    t[0] = RepeatStatement(t[2], t[4])
 
 def p_for_statement(t):
     """for_statement : FOR assignment_statement TO expression DO statement
                     | FOR assignment_statement DOWNTO expression DO statement"""
-    if t[3] == 'TO':
-        print(f"For statement: FOR {t[2]} TO {t[4]} DO {t[6]}")
-        t[0] = f"FOR {t[2]} TO {t[4]} DO {t[6]}"
-    else:
-        print(f"For statement: FOR {t[2]} DOWNTO {t[4]} DO {t[6]}")
-        t[0] = f"FOR {t[2]} DOWNTO {t[4]} DO {t[6]}"
+
+    t[0] = ForStatement(t[2], t[3], t[4], t[6])
 
 def p_assignment_statement(t):
     """assignment_statement : ID ASSIGN expression
                             | ID ASSIGN procedure_or_function_call
                             | ID LBRACKET expression RBRACKET ASSIGN expression"""
     if len(t) == 4:
-        print(f"Assignment: {t[1]} := {t[3]}")
-        t[0] = f"{t[1]} := {t[3]}"
+        t[0] = Assignment(Identifier(t[1]), t[3])
     else:
-        print(f"Array assignment: {t[1]}[{t[3]}] := {t[6]}")
-        t[0] = f"{t[1]}[{t[3]}] := {t[6]}"
+        t[0] = ArrayAssignment(t[1], t[3], t[6])
 
 def p_expression(t):
     """expression : expression and_or expression_m
                   | expression_m"""
     if len(t) == 4:
-        print(f"Expression: {t[1]} {t[2]} {t[3]}")
-        t[0] = f"{t[1]} {t[2]} {t[3]}"
+        t[0] = BinaryOp(t[1], t[2], t[3])
     else:
-        print(f"Expression_m: {t[1]}")
         t[0] = t[1]
 
 def p_expression_m(t):
     """expression_m : expression_s
                    | expression_m sign expression_s"""
     if len(t) == 4:
-        print(f"Expression_m: {t[1]} {t[2]} {t[3]}")
-        t[0] = f"{t[1]} {t[2]} {t[3]}"
+        t[0] = BinaryOp(t[1], t[2], t[3])
     else:
-        print(f"Expression_s: {t[1]}")
         t[0] = t[1]
 
 def p_expression_s(t):
     """expression_s : element
                    | expression_s psign element"""
     if len(t) == 4:
-        print(f"Expression_s: {t[1]} {t[2]} {t[3]}")
-        t[0] = f"{t[1]} {t[2]} {t[3]}"
+        t[0] = BinaryOp(t[1], t[2], t[3])
     else:
-        print(f"Element: {t[1]}")
         t[0] = t[1]
-
 def p_and_or(t):
     """and_or : AND
               | OR"""
-    print(f"And/Or: {t[1]}")
     t[0] = t[1]
 
 def p_psign(t):
     """psign : TIMES
              | DIVIDE"""
-    print(f"Psign: {t[1]}")
     t[0] = t[1]
 
 def p_sign(t):
@@ -370,13 +346,11 @@ def p_sign(t):
             | LESSEQUAL
             | GREATERTHAN
             | GREATEREQUAL"""
-    print(f"Sign: {t[1]}")
     t[0] = t[1]
 
 def p_length_function(t):
     """length_function : LENGTH LPAREN expression RPAREN"""
-    print(f"Length function: LENGTH({t[3]})")
-    t[0] = f"LENGTH({t[3]})"
+    t[0] = LengthFunction(t[3])
 
 def p_element(t):
     """element : ID
@@ -389,25 +363,27 @@ def p_element(t):
                | ID LBRACKET expression RBRACKET
                | procedure_or_function_call"""
     if len(t) == 2:
-        print(f"Element: {t[1]}")
-        t[0] = t[1]
+        if isinstance(t[1], ASTNode):
+            t[0] = t[1]
+        elif isinstance(t[1], (int, float)):
+            t[0] = Literal(t[1], 'NUMBER')
+        elif t[1] in ('true', 'false'):
+            t[0] = Literal(t[1], 'BOOL')
+        elif isinstance(t[1], str) and (t[1].startswith('"') or t[1].startswith("'")):
+            t[0] = Literal(t[1], 'PHRASE')
+        else:
+            t[0] = Identifier(t[1])
     elif len(t) == 3:
-        print(f"Not element: NOT {t[2]}")
-        t[0] = f"NOT {t[2]}"
+        t[0] = UnaryOp('NOT', t[2])
     elif len(t) == 4:
-        print(f"Parenthesized expression: ({t[2]})")
-        t[0] = f"({t[2]})"
+        t[0] = t[2]  
     elif len(t) == 5:
         if t[1] == 'LENGTH':
-            print(f"Length function: LENGTH({t[3]})")
-            t[0] = f"LENGTH({t[3]})"
+            t[0] = LengthFunction(t[3])
         else:
-            print(f"Array element: {t[1]}[{t[3]}]")
-            t[0] = f"{t[1]}[{t[3]}]"
+            t[0] = ArrayId(t[1], t[3])
     else:
-        # This should not be reached, but just in case
-        print(f"Unknown element structure")
-        t[0] = "Unknown"
+        t[0] = None
 
 def p_error(t):
     if t:
@@ -416,6 +392,39 @@ def p_error(t):
         print("Syntax error at EOF")
 
 parser = yacc.yacc(debug=True)
+
+def print_ast(node, indent=0):
+    if node is None:
+        return "None"
+    
+    indent_str = "  " * indent
+    
+    if isinstance(node, list):
+        result = "[\n"
+        for item in node:
+            result += f"{indent_str}  {print_ast(item, indent + 1)},\n"
+        result += f"{indent_str}]"
+        return result
+    
+    if not isinstance(node, ASTNode):
+        return str(node)
+    
+    class_name = node.__class__.__name__
+    
+    attrs = []
+    for attr_name in dir(node):
+        if attr_name.startswith('_') or callable(getattr(node, attr_name)):
+            continue
+        
+        attr_value = getattr(node, attr_name)
+        attrs.append(f"{attr_name}={print_ast(attr_value, indent + 1)}")
+    
+    if attrs:
+        attrs_str = ",\n".join(f"{indent_str}  {attr}" for attr in attrs)
+        return f"{class_name}(\n{attrs_str}\n{indent_str})"
+    else:
+        return f"{class_name}()"
+
 
 def main():
     if len(sys.argv) != 2:
@@ -427,8 +436,10 @@ def main():
     print(f"\nParsing file: {filename}\n")
     result = parser.parse(data)
     print("\nParsing completed successfully!")
-    print("\nFinal result:")
-    print(result)
+    print("\nAST result:")
+    ast = print_ast(result)
+    print(ast)
+    return result
 
 if __name__ == "__main__":
     main()
