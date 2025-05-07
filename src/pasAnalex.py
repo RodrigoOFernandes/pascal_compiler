@@ -191,7 +191,6 @@ def t_NUMBER(t):
 
 def t_PHRASE(t):
     r"'[^']*'"
-    t.value = t.value[1:-1]
     return t
 
 # Comentários
