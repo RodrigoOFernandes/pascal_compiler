@@ -219,7 +219,9 @@ def p_case_option(t):
     t[0] = CaseOption(value, t[3])
 def p_writeln_statement(t):
     """writeln_statement : WRITELN LPAREN param_list RPAREN
-                         | WRITELN LPAREN RPAREN"""
+                         | WRITELN LPAREN RPAREN
+                         | WRITE LPAREN param_list RPAREN
+                         | WRITE LPAREN RPAREN"""
     if len(t) == 5:
         t[0] = WritelnStatement(t[3])
     else:
@@ -227,7 +229,9 @@ def p_writeln_statement(t):
 
 def p_readln_statement(t):
     """readln_statement : READLN LPAREN id_list RPAREN
-                       | READLN LPAREN RPAREN"""
+                       | READLN LPAREN RPAREN
+                       | READ LPAREN id_list RPAREN
+                       | READ LPAREN RPAREN"""
     if len(t) == 5:
         t[0] = ReadlnStatement(t[3])
     else:
