@@ -82,12 +82,11 @@ class ASTSemanticAnalyzer:
         self.type_compatibility = {
             "INTEGER": {"INTEGER": "INTEGER", "REAL": "REAL", "NUMBER": "INTEGER"},
             "REAL": {"INTEGER": "REAL", "REAL": "REAL", "NUMBER": "REAL"},
-            "BOOLEAN": {"BOOLEAN": "BOOLEAN"},
+            "BOOLEAN": {"BOOLEAN": "BOOLEAN", "NUMBER": "BOOLEAN"},  # Allow NUMBER to BOOLEAN conversion
             "STRING": {"STRING": "STRING", "PHRASE": "STRING"},
             "CHAR": {"CHAR": "CHAR", "STRING": "STRING", "PHRASE": "STRING"}  # Novo tipo
         }
         
-        # Operator type checking rules - updated for literals
         self.operator_rules = {
             "+": {
                 ("INTEGER", "INTEGER"): "INTEGER",
@@ -127,13 +126,13 @@ class ASTSemanticAnalyzer:
                 ("NUMBER", "INTEGER"): "REAL",
                 ("NUMBER", "NUMBER"): "REAL"
             },
-            "DIV": {
+            "div": {  # Changed from "DIV" to "div" to match case in AST
                 ("INTEGER", "INTEGER"): "INTEGER",
                 ("INTEGER", "NUMBER"): "INTEGER",
                 ("NUMBER", "INTEGER"): "INTEGER",
                 ("NUMBER", "NUMBER"): "INTEGER"
             },
-            "MOD": {
+            "mod": {  # Changed from "MOD" to "mod" to match case in AST
                 ("INTEGER", "INTEGER"): "INTEGER",
                 ("INTEGER", "NUMBER"): "INTEGER",
                 ("NUMBER", "INTEGER"): "INTEGER",
@@ -224,17 +223,17 @@ class ASTSemanticAnalyzer:
                 ("PHRASE", "STRING"): "BOOLEAN",
                 ("PHRASE", "PHRASE"): "BOOLEAN"
             },
-            "AND": {
-                ("BOOLEAN", "BOOLEAN"): "BOOLEAN"
+            "and": {  # Changed from "AND" to "and" to match case in AST
+                ("BOOLEAN", "BOOLEAN"): "BOOLEAN",
             },
-            "OR": {
-                ("BOOLEAN", "BOOLEAN"): "BOOLEAN"
+            "or": {  # Changed from "OR" to "or" to match case in AST
+                ("BOOLEAN", "BOOLEAN"): "BOOLEAN",
             }
         }
         
         # Unary operator rules - updated for literals
         self.unary_operator_rules = {
-            "NOT": {
+            "not": {  # Changed from "NOT" to "not" to match case in AST
                 "BOOLEAN": "BOOLEAN"
             },
             "-": {
@@ -243,7 +242,6 @@ class ASTSemanticAnalyzer:
                 "NUMBER": "NUMBER"
             }
         }
-
     def error(self, message):
         """Add a semantic error to the list of errors."""
         self.errors.append(message)
