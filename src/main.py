@@ -3,6 +3,7 @@ from pasAnalex import lexer
 from pasSyn import parser, print_ast
 from ASTOptimizer import ASTOptimizer
 from pasSem import ASTSemanticAnalyzer
+from code_generator import Generator
 
 def main():
     if len(sys.argv) != 2:
@@ -37,6 +38,11 @@ def main():
         sys.exit(1)
     print("Semantic analysis completed successfully.")
     
+    
+    generator = Generator(filename)
+    generator.generate(optimized_ast)
+
+
     print("\nCompilation successful!")
     return 0
 
