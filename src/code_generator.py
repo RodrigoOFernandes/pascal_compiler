@@ -53,14 +53,9 @@ class Generator:
         return None
 
     def visit_VarDeclaration(self, node):
-       var_names = self.visit(node.id_list) 
-       var_type = node.type_name
-       if var_names is not None:
-           for var in var_names:
-               print("VAR DEBUG")
-               print(var_type)
-               self.types[var] = var_type
-
+       for id in node.id_list:
+           var_name = self.visit(id)
+           self.types[var_name] = self.visit(node.type_name) 
        return None
 
     def visit_IdList(self, node):
@@ -81,16 +76,32 @@ class Generator:
         return None
 
     def visit_Assignment(self, node):
-        if isinstance(node.target, Identifier):
-            target_name = self.visit(node.target)
+        target_name = self.visit(node.target)
+        
+        if isinstance(node.value, Literal):
             value_type, value = self.visit(node.value)
-            self.stack[target_name] = self.op_stack_pos
-            self.op_stack_pos += 1
             if value_type == "NUMBER":
                 command = f"pushi {value}\n"
                 with open(self.filename, 'a') as f:
                     f.write(command)
-        return None
+                self.stack[target_name] = self.op_stack_pos
+                self.op_stack_pos += 1
+                command = f"storeg {self.stack[target_name]}\n"
+                with open(self.filename, 'a') as f:
+                    f.write(command)
+        
+        elif isinstance(node.value, BinaryOp):
+            self.visit(node.value)
+            
+            if target_name not in self.stack:
+                self.stack[target_name] = self.op_stack_pos
+                self.op_stack_pos += 1
+            
+            command = f"storeg {self.stack[target_name]}\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+
+        return target_name
     
     def visit_WritelnStatement(self, node):
         if node.params is not None:
@@ -102,6 +113,16 @@ class Generator:
                     command = f'pushs "{phrase}"\nwrites\n'
                     with open(self.filename, 'a') as f:
                         f.write(command)
+                if isinstance(param, Identifier):
+                   param_name = self.visit(param)
+                   if self.types[param_name] == "integer":
+                       command = f"pushg {self.stack[param_name]}\nwritei\n" 
+                       with open(self.filename, 'a') as f:
+                           f.write(command)
+
+        command = "writeln\n" 
+        with open(self.filename, 'a') as f:
+            f.write(command)
         return None
 
     def visit_ReadlnStatement(self, node):
@@ -109,29 +130,87 @@ class Generator:
             for param in node.params:
                 if isinstance(param, ArrayId):
                     array_name = self.visit(param)
-                    print("DEBUG\n")
-                    print(array_name)
-                    print(self.types[array_name])
                     if self.types[array_name] == "integer":
                         command = f"read\natoi\n"
-                        self.op_stack_pos += 1
-                        with open(self.filename, 'w') as f:
+                        with open(self.filename, 'a') as f:
                             f.write(command)
+                        self.stack[array_name] = self.op_stack_pos
+                        self.op_stack_pos += 1
 
     def visit_ForStatement(self, node):
-        label = f"FOR{self.loop_counter}"
-        self.loop_counter += 1 
+        init_var_name = self.visit(node.init)
         
-        if node.direction == "TO":
-            self.visit(node.init)
-            limit_type, limit = self.visit(node.limit)
-            if limit_type == "NUMBER":
-                command = f"pushi {limit}\n"
-                self.op_stack_pos += 1
-                with open(self.filename, 'a') as f:
-                    f.write(command)
+        loop_start_label = f"FOR{self.loop_counter}"
+        loop_end_label = f"OUT{self.loop_counter}"
+        self.loop_counter += 1
+        
+        limit_type, limit = self.visit(node.limit)
+        
+        if node.direction == "to":
+            with open(self.filename, 'a') as f:
+                f.write(f"{loop_start_label}:\n")
+            
+            command = f"pushg {self.stack[init_var_name]}\npushi {limit}\ninfeq\njz {loop_end_label}\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+            
+            self.visit(node.body)
 
-        self.visit(node.body) 
+            command = f"pushg {self.stack[init_var_name]}\npushi 1\nadd\nstoreg {self.stack[init_var_name]}\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+            
+            command = f"jump {loop_start_label}\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+
+            with open(self.filename, 'a') as f:
+                f.write(f"{loop_end_label}:\n")
+    
+    def visit_BinaryOp(self, node):
+        if isinstance(node.left, Identifier):
+            left_name = self.visit(node.left)
+            command = f"pushg {self.stack[left_name]}\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+        elif isinstance(node.left, Literal):
+            left_type, left_value = self.visit(node.left)
+            command = f"pushi {left_value}\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+
+        if isinstance(node.right, ArrayId):
+            array_name = self.visit(node.right)
+            command = f"pushg {self.stack[array_name]}\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+        elif isinstance(node.right, Identifier):
+            right_name = self.visit(node.right)
+            command = f"pushg {self.stack[right_name]}\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+        elif isinstance(node.right, Literal):
+            right_type, right_value = self.visit(node.right)
+            command = f"pushi {right_value}\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+
+        if node.operator == '+':
+            command = f"add\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+        elif node.operator == '-':
+            command = f"sub\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+        elif node.operator == '*':
+            command = f"mul\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+        elif node.operator == '/':
+            command = f"div\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
 
     def visit_Identifier(self, node):
         return node.name
@@ -142,3 +221,8 @@ class Generator:
     def visit_ArrayId(self, node):
         return node.id_name
 
+    def visit_ArrayType(self, node):
+        return self.visit(node.element_type) 
+
+    def visit_Type(self, node):
+        return node.type_name
