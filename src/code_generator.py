@@ -11,6 +11,7 @@ class Generator:
             f.write('')
         self.op_stack_pos = 0
         self.loop_counter = 0
+        self.if_counter = 0
         self.types = {}
 
     def generate(self, ast):
@@ -90,6 +91,25 @@ class Generator:
                 with open(self.filename, 'a') as f:
                     f.write(command)
         
+        elif isinstance(node.value, LengthFunction):
+            expr = self.visit(node.value.expression)
+            if isinstance(node.value.expression, Identifier):
+                command = f"pushg {self.stack[expr]}\n"
+                with open(self.filename, 'a') as f:
+                    f.write(command)
+            
+            command = "strlen\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+
+            if target_name not in self.stack:
+                self.stack[target_name] = self.op_stack_pos
+                self.op_stack_pos += 1
+                
+            command = f"storeg {self.stack[target_name]}\n"
+            with open(self.filename, 'a') as f:
+                f.write(command) 
+
         elif isinstance(node.value, BinaryOp):
             self.visit(node.value)
             
@@ -137,6 +157,16 @@ class Generator:
                         self.stack[array_name] = self.op_stack_pos
                         self.op_stack_pos += 1
 
+                if isinstance(param, Identifier):
+                    var_name = self.visit(param)
+                    if self.types[var_name] == "string":
+                        command = f"read\n"
+                        with open(self.filename, 'a') as f:
+                            f.write(command)
+                        self.stack[var_name] = self.op_stack_pos
+                        self.op_stack_pos += 1
+
+
     def visit_ForStatement(self, node):
         init_var_name = self.visit(node.init)
         
@@ -166,7 +196,55 @@ class Generator:
 
             with open(self.filename, 'a') as f:
                 f.write(f"{loop_end_label}:\n")
-    
+        else:
+            with open(self.filename, 'a') as f:
+                f.write(f"{loop_start_label}:\n")
+           
+            command = f"pushg {self.stack[init_var_name]}\npushi {limit}\nsupeq\njz {loop_end_label}\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+
+            self.visit(node.body)
+
+            command = f"pushg {self.stack[init_var_name]}\npushi 1\nsub\nstoreg {self.stack[init_var_name]}\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+
+            command = f"jump {loop_start_label}\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+
+            with open(self.filename, 'a') as f:
+                f.write(f"{loop_end_label}:\n")
+
+    def visit_IfStatement(self, node):
+        self.visit(node.condition)
+
+        else_label = f"ELSE{self.if_counter}"
+        end_if_label = f"ENDIF{self.if_counter}"
+        self.if_counter += 1
+
+        command = f"jz {else_label}\n"
+        with open(self.filename, 'a') as f:
+            f.write(command)
+
+        self.visit(node.then_branch)
+
+        command = f"jump {end_if_label}\n"
+        with open(self.filename, 'a') as f:
+            f.write(command)
+
+        with open(self.filename, 'a') as f:
+            f.write(f"{else_label}:\n")
+        
+        if node.else_branch:
+            self.visit(node.else_branch)
+
+        with open(self.filename, 'a') as f:
+            f.write(f"{end_if_label}:\n")
+            
+        return None
+
     def visit_BinaryOp(self, node):
         if isinstance(node.left, Identifier):
             left_name = self.visit(node.left)
@@ -178,6 +256,17 @@ class Generator:
             command = f"pushi {left_value}\n"
             with open(self.filename, 'a') as f:
                 f.write(command)
+        elif isinstance(node.left, ArrayId):
+            array_name = self.visit(node.left)
+            command = f"pushg {self.stack[array_name]}\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+
+            if self.types[array_name] == "string":
+               pascal_index = self.visit(node.left.expression) 
+               command = f"pushg {self.stack[pascal_index]}\npushi 1\nsub\ncharat\n"
+               with open(self.filename, 'a') as f:
+                   f.write(command)
 
         if isinstance(node.right, ArrayId):
             array_name = self.visit(node.right)
@@ -191,9 +280,16 @@ class Generator:
                 f.write(command)
         elif isinstance(node.right, Literal):
             right_type, right_value = self.visit(node.right)
-            command = f"pushi {right_value}\n"
-            with open(self.filename, 'a') as f:
-                f.write(command)
+            if right_type == "NUMBER":
+                command = f"pushi {right_value}\n"
+                with open(self.filename, 'a') as f:
+                    f.write(command)
+            elif right_type == "PHRASE":
+                right_value = right_value[1:-1]
+                right_value = f'"{right_value}"'
+                command = f"pushs {right_value}\npushi 0\ncharat\n"
+                with open(self.filename, 'a') as f:
+                    f.write(command)
 
         if node.operator == '+':
             command = f"add\n"
@@ -211,6 +307,12 @@ class Generator:
             command = f"div\n"
             with open(self.filename, 'a') as f:
                 f.write(command)
+                
+        elif node.operator == '=':
+            command = f"equal\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+            
 
     def visit_Identifier(self, node):
         return node.name
