@@ -6,6 +6,6 @@ begin
     readln(n);
     fat := 1;
     for i := 1 to n do
-        fat := fat + i;
+        fat := fat * i;
     writeln('Fatorial de ', n, ': ', fat);
 end.

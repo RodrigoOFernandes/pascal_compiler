@@ -1,0 +1,49 @@
+pushs "Introduza o primeiro número: "
+writes
+writeln
+read
+atoi
+pushs "Introduza o segundo número: "
+writes
+writeln
+read
+atoi
+pushs "Introduza o terceiro número: "
+writes
+writeln
+read
+atoi
+pushg 0
+pushg 1
+sup
+jz ELSE0
+pushg 0
+pushg 2
+sup
+jz ELSE1
+pushg 0
+storeg 3
+jump ENDIF1
+ELSE1:
+pushg 2
+storeg 3
+ENDIF1:
+jump ENDIF0
+ELSE0:
+pushg 1
+pushg 2
+sup
+jz ELSE2
+pushg 1
+storeg 3
+jump ENDIF2
+ELSE2:
+pushg 2
+storeg 3
+ENDIF2:
+ENDIF0:
+pushs "O maior é: "
+writes
+pushg 3
+writei
+writeln

@@ -1,0 +1,48 @@
+pushs "Introduza uma string binária:"
+writes
+writeln
+read
+pushi 0
+storeg 1
+pushi 1
+storeg 2
+pushg 0
+strlen
+storeg 3
+FOR0:
+pushg 3
+pushi 1
+supeq
+jz OUT0
+pushg 0
+pushg 3
+pushi 1
+sub
+charat
+pushs "1"
+pushi 0
+charat
+equal
+jz ELSE0
+pushg 1
+pushg 2
+add
+storeg 1
+jump ENDIF0
+ELSE0:
+ENDIF0:
+pushg 2
+pushi 2
+mul
+storeg 2
+pushg 3
+pushi 1
+sub
+storeg 3
+jump FOR0
+OUT0:
+pushs "O valor inteiro correspondente é: "
+writes
+pushg 1
+writei
+writeln
