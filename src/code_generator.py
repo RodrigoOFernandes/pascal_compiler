@@ -56,7 +56,7 @@ class Generator:
     def visit_VarDeclaration(self, node):
        for id in node.id_list:
            var_name = self.visit(id)
-           self.types[var_name] = self.visit(node.type_name) 
+           self.types[var_name] = self.visit(node.type_name).lower() 
        return None
 
     def visit_IdList(self, node):
@@ -78,10 +78,11 @@ class Generator:
 
     def visit_Assignment(self, node):
         target_name = self.visit(node.target)
-        
+
         if isinstance(node.value, Literal):
             value_type, value = self.visit(node.value)
             if value_type == "NUMBER":
+                value = int(value)
                 command = f"pushi {value}\n"
                 with open(self.filename, 'a') as f:
                     f.write(command)
@@ -118,6 +119,17 @@ class Generator:
                 self.op_stack_pos += 1
             
             command = f"storeg {self.stack[target_name]}\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+
+        elif isinstance(node.value, Identifier):
+            var_name = self.visit(node.value)
+            
+            if target_name not in self.stack:
+                self.stack[target_name] = self.op_stack_pos
+                self.op_stack_pos += 1
+
+            command = f"pushg {self.stack[var_name]}\nstoreg {self.stack[target_name]}\n"
             with open(self.filename, 'a') as f:
                 f.write(command)
 
@@ -165,6 +177,13 @@ class Generator:
                             f.write(command)
                         self.stack[var_name] = self.op_stack_pos
                         self.op_stack_pos += 1
+                    elif self.types[var_name] == "integer":
+                        command = f"read\natoi\n"
+                        with open(self.filename, 'a') as f:
+                            f.write(command)
+                        self.stack[var_name] = self.op_stack_pos
+                        self.op_stack_pos += 1
+
 
 
     def visit_ForStatement(self, node):
@@ -173,14 +192,22 @@ class Generator:
         loop_start_label = f"FOR{self.loop_counter}"
         loop_end_label = f"OUT{self.loop_counter}"
         self.loop_counter += 1
-        
-        limit_type, limit = self.visit(node.limit)
-        
+      
+        limit = None
+        if isinstance(node.limit, Literal):
+            limit_type, limit = self.visit(node.limit)
+        elif isinstance(node.limit, Identifier):
+            limit_name = self.visit(node.limit)
+
         if node.direction == "to":
             with open(self.filename, 'a') as f:
                 f.write(f"{loop_start_label}:\n")
-            
-            command = f"pushg {self.stack[init_var_name]}\npushi {limit}\ninfeq\njz {loop_end_label}\n"
+           
+            if limit is not None:
+                command = f"pushg {self.stack[init_var_name]}\npushi {limit}\ninfeq\njz {loop_end_label}\n"
+            else:
+                command = f"pushg {self.stack[init_var_name]}\npushg {self.stack[limit_name]}\ninfeq\njz {loop_end_label}\n"
+
             with open(self.filename, 'a') as f:
                 f.write(command)
             
@@ -205,7 +232,7 @@ class Generator:
                 f.write(command)
 
             self.visit(node.body)
-
+            
             command = f"pushg {self.stack[init_var_name]}\npushi 1\nsub\nstoreg {self.stack[init_var_name]}\n"
             with open(self.filename, 'a') as f:
                 f.write(command)
@@ -216,6 +243,31 @@ class Generator:
 
             with open(self.filename, 'a') as f:
                 f.write(f"{loop_end_label}:\n")
+
+    def visit_WhileStatement(self, node):
+        loop_start_label = f"WHILE{self.loop_counter}"
+        loop_end_label = f"ENDWHILE{self.loop_counter}"
+        self.loop_counter += 1
+        
+        with open(self.filename, 'a') as f:
+            f.write(f"{loop_start_label}:\n")
+        
+        self.visit(node.condition)
+        
+        command = f"jz {loop_end_label}\n"
+        with open(self.filename, 'a') as f:
+            f.write(command)
+        
+        self.visit(node.body)
+        
+        command = f"jump {loop_start_label}\n"
+        with open(self.filename, 'a') as f:
+            f.write(command)
+        
+        with open(self.filename, 'a') as f:
+            f.write(f"{loop_end_label}:\n")
+        
+        return None
 
     def visit_IfStatement(self, node):
         self.visit(node.condition)
@@ -267,6 +319,8 @@ class Generator:
                command = f"pushg {self.stack[pascal_index]}\npushi 1\nsub\ncharat\n"
                with open(self.filename, 'a') as f:
                    f.write(command)
+        elif isinstance(node.left, BinaryOp):
+            self.visit(node.left)
 
         if isinstance(node.right, ArrayId):
             array_name = self.visit(node.right)
@@ -290,6 +344,8 @@ class Generator:
                 command = f"pushs {right_value}\npushi 0\ncharat\n"
                 with open(self.filename, 'a') as f:
                     f.write(command)
+        elif isinstance(node.right, BinaryOp):
+            self.visit(node.right)
 
         if node.operator == '+':
             command = f"add\n"
@@ -303,8 +359,13 @@ class Generator:
             command = f"mul\n"
             with open(self.filename, 'a') as f:
                 f.write(command)
-        elif node.operator == '/':
+        elif node.operator == 'div':
             command = f"div\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+
+        elif node.operator == 'mod':
+            command = f"mod\n"
             with open(self.filename, 'a') as f:
                 f.write(command)
                 
@@ -312,7 +373,38 @@ class Generator:
             command = f"equal\n"
             with open(self.filename, 'a') as f:
                 f.write(command)
+        
+        elif node.operator == '>':
+            command = f"sup\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+
+        elif node.operator == '<':
+            command = f"inf\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+
+        elif node.operator == '<=':
+            command = f"infeq\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+
+        elif node.operator == '>=':
+            command = f"supeq\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
             
+        elif node.operator == 'and':
+            command = f"and\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+            
+        elif node.operator == 'or':
+            command = f"or\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+
+
 
     def visit_Identifier(self, node):
         return node.name
