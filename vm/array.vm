@@ -1,3 +1,29 @@
 pushi 0
+storeg 0
 pushs "Introduza 5 números inteiros:"
 writes
+writeln
+pushi 1
+storeg 1
+FOR0:
+pushg 1
+pushi 5
+infeq
+jz OUT0
+read
+atoi
+pushg 0
+pushg 2
+add
+storeg 0
+pushg 1
+pushi 1
+add
+storeg 1
+jump FOR0
+OUT0:
+pushs "A soma dos números é: "
+writes
+pushg 0
+writei
+writeln
