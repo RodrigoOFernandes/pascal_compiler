@@ -4,15 +4,20 @@ from ASTNode import *
 class Generator:
     def __init__(self, filename):
         self.stack = {}
+        self.function_stack = {}
         base_name = os.path.basename(filename)
         file_name_without_ext = os.path.splitext(base_name)[0] 
         self.filename = f"../vm/{file_name_without_ext}.vm"
         with open(self.filename, 'w') as f:
             f.write('')
         self.op_stack_pos = 0
+        self.fun_stack_pos = 0
         self.loop_counter = 0
         self.if_counter = 0
+        self.in_function = False
+        self.has_function = False
         self.types = {}
+        self.current_function = None
 
     def generate(self, ast):
        self.visit(ast) 
@@ -39,11 +44,26 @@ class Generator:
         return None 
 
     def visit_Block(self, node):
+        if node.proc_func_part:
+            self.has_function = True
+            
         if node.var_decl_part:
             self.visit(node.var_decl_part)
 
+        if node.extra_var_decl:
+            self.visit(node.extra_var_decl)
+        
         if node.statement_part:
             self.visit(node.statement_part)
+
+        if self.has_function:
+            command = f"stop\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+
+        if node.proc_func_part:
+            for func in node.proc_func_part:
+                self.visit(func)
 
         return None 
 
@@ -74,11 +94,42 @@ class Generator:
     def visit_StatementSequence(self, node):
         for statement in node.statements:
             self.visit(statement)
+
         return None
+
+    def visit_ProcedureCall(self, node):
+        name = node.procedure_name
+        if node.params:
+            for param in node.params:
+                param_name = self.visit(param)
+                command = f"pushg {self.stack[param_name]}\n"
+                with open(self.filename, 'a') as f:
+                    f.write(command)
+        
+        command = f"pusha {name}\ncall\n"
+        with open(self.filename, 'a') as f:
+            f.write(command)
+    
+    def visit_FunctionDeclaration(self, node):
+        self.visit(node.heading)
+        self.in_function = True
+        self.visit(node.block)
+        self.in_function = False
+    
+    def visit_FunctionHeading(self, node):
+        fun_name = node.name 
+        self.current_function = fun_name
+        command = f"{fun_name}:\nstart\n"
+        with open(self.filename, 'a') as f:
+            f.write(command)
+        
+        self.argument_pointer = self.op_stack_pos
+        if node.params:
+            for param in node.params:
+                self.argument = self.visit(param)
 
     def visit_Assignment(self, node):
         target_name = self.visit(node.target)
-
         if isinstance(node.value, Literal):
             value_type, value = self.visit(node.value)
             if value_type == "NUMBER":
@@ -86,12 +137,23 @@ class Generator:
                 command = f"pushi {value}\n"
                 with open(self.filename, 'a') as f:
                     f.write(command)
-                self.stack[target_name] = self.op_stack_pos
-                self.op_stack_pos += 1
-                command = f"storeg {self.stack[target_name]}\n"
-                with open(self.filename, 'a') as f:
-                    f.write(command)
-        
+                if self.in_function:
+                    if target_name not in self.function_stack:
+                        self.function_stack[target_name] = self.fun_stack_pos
+                        self.fun_stack_pos += 1
+                        self.op_stack_pos += 1
+                    command = f"storel {self.function_stack[target_name]}\n"
+                    with open(self.filename, 'a') as f:
+                        f.write(command)
+                else:
+                    if target_name not in self.stack:
+                        self.stack[target_name] = self.op_stack_pos
+                        self.op_stack_pos += 1
+
+                    command = f"storeg {self.stack[target_name]}\n"
+                    with open(self.filename, 'a') as f:
+                        f.write(command)
+            
         elif isinstance(node.value, LengthFunction):
             expr = self.visit(node.value.expression)
             if isinstance(node.value.expression, Identifier):
@@ -102,36 +164,81 @@ class Generator:
             command = "strlen\n"
             with open(self.filename, 'a') as f:
                 f.write(command)
-
-            if target_name not in self.stack:
-                self.stack[target_name] = self.op_stack_pos
-                self.op_stack_pos += 1
-                
-            command = f"storeg {self.stack[target_name]}\n"
-            with open(self.filename, 'a') as f:
-                f.write(command) 
+            
+            if self.in_function:
+                if target_name not in self.function_stack:
+                    self.function_stack[target_name] = self.fun_stack_pos
+                    self.fun_stack_pos += 1
+                    self.op_stack_pos += 1
+                command = f"storel {self.function_stack[target_name]}\n"
+                with open(self.filename, 'a') as f:
+                    f.write(command) 
+            else:
+                if target_name not in self.stack:
+                    self.stack[target_name] = self.op_stack_pos
+                    self.op_stack_pos += 1
+                    
+                command = f"storeg {self.stack[target_name]}\n"
+                with open(self.filename, 'a') as f:
+                    f.write(command) 
 
         elif isinstance(node.value, BinaryOp):
             self.visit(node.value)
             
-            if target_name not in self.stack:
-                self.stack[target_name] = self.op_stack_pos
-                self.op_stack_pos += 1
+            if self.in_function:
+                if target_name not in self.function_stack:
+                    self.function_stack[target_name] = self.fun_stack_pos
+                    self.fun_stack_pos += 1
+                    self.op_stack_pos += 1
+                command = f"storel {self.function_stack[target_name]}\n"
+            else:
+                if target_name not in self.stack:
+                    self.stack[target_name] = self.op_stack_pos
+                    self.op_stack_pos += 1
+                command = f"storeg {self.stack[target_name]}\n"
             
-            command = f"storeg {self.stack[target_name]}\n"
             with open(self.filename, 'a') as f:
                 f.write(command)
 
         elif isinstance(node.value, Identifier):
             var_name = self.visit(node.value)
-            
-            if target_name not in self.stack:
-                self.stack[target_name] = self.op_stack_pos
-                self.op_stack_pos += 1
 
-            command = f"pushg {self.stack[var_name]}\nstoreg {self.stack[target_name]}\n"
+            if self.current_function == target_name:
+                if var_name in self.function_stack:
+                    command = f"pushl {self.function_stack[var_name]}\nreturn\n"
+                else:
+                    command = f"pushg {self.stack[var_name]}\nreturn\n"
+                self.fun_stack_pos = 0
+                self.function_stack = {}
+                with open(self.filename, 'a') as f:
+                    f.write(command)
+                return target_name
+            
+            if self.in_function:
+                if target_name not in self.function_stack:
+                    self.function_stack[target_name] = self.fun_stack_pos
+                    self.fun_stack_pos += 1
+                    self.op_stack_pos += 1
+                
+                if var_name in self.function_stack:
+                    command = f"pushl {self.function_stack[var_name]}\nstorel {self.function_stack[target_name]}\n"
+                else:
+                    command = f"pushg {self.stack[var_name]}\nstorel {self.function_stack[target_name]}\n"
+            else:
+                if target_name not in self.stack:
+                    self.stack[target_name] = self.op_stack_pos
+                    self.op_stack_pos += 1
+
+                if var_name in self.function_stack:
+                    command = f"pushl {self.function_stack[var_name]}\nstoreg {self.stack[target_name]}\n"
+                else:
+                    command = f"pushg {self.stack[var_name]}\nstoreg {self.stack[target_name]}\n"
+            
             with open(self.filename, 'a') as f:
                 f.write(command)
+
+        elif isinstance(node.value, ProcedureCall):
+            self.visit(node.value)
 
         return target_name
     
@@ -148,10 +255,14 @@ class Generator:
                 if isinstance(param, Identifier):
                    param_name = self.visit(param)
                    if self.types[param_name] == "integer":
-                       command = f"pushg {self.stack[param_name]}\nwritei\n" 
-                       with open(self.filename, 'a') as f:
-                           f.write(command)
-
+                       if self.has_function:
+                           command = f"writei\n"
+                           with open(self.filename, 'a') as f:
+                               f.write(command)
+                       else:
+                           command = f"pushg {self.stack[param_name]}\nwritei\n" 
+                           with open(self.filename, 'a') as f:
+                               f.write(command)
         command = "writeln\n" 
         with open(self.filename, 'a') as f:
             f.write(command)
@@ -204,16 +315,26 @@ class Generator:
                 f.write(f"{loop_start_label}:\n")
            
             if limit is not None:
-                command = f"pushg {self.stack[init_var_name]}\npushi {limit}\ninfeq\njz {loop_end_label}\n"
+                if self.in_function:
+                    command = f"pushl {self.function_stack[init_var_name]}\npushi {limit}\ninfeq\njz {loop_end_label}\n"
+                else:
+                    command = f"pushg {self.stack[init_var_name]}\npushi {limit}\ninfeq\njz {loop_end_label}\n"
             else:
-                command = f"pushg {self.stack[init_var_name]}\npushg {self.stack[limit_name]}\ninfeq\njz {loop_end_label}\n"
+                if self.in_function:
+                    command = f"pushl {self.function_stack[init_var_name]}\npushl {self.function_stack[limit_name]}\ninfeq\njz {loop_end_label}\n"
+                else:
+                    command = f"pushg {self.stack[init_var_name]}\npushg {self.stack[limit_name]}\ninfeq\njz {loop_end_label}\n"
 
             with open(self.filename, 'a') as f:
                 f.write(command)
             
             self.visit(node.body)
 
-            command = f"pushg {self.stack[init_var_name]}\npushi 1\nadd\nstoreg {self.stack[init_var_name]}\n"
+            if self.in_function:
+                command = f"pushl {self.function_stack[init_var_name]}\npushi 1\nadd\nstorel {self.function_stack[init_var_name]}\n"
+            else:
+                command = f"pushg {self.stack[init_var_name]}\npushi 1\nadd\nstoreg {self.stack[init_var_name]}\n"
+            
             with open(self.filename, 'a') as f:
                 f.write(command)
             
@@ -223,17 +344,31 @@ class Generator:
 
             with open(self.filename, 'a') as f:
                 f.write(f"{loop_end_label}:\n")
-        else:
+        else:  # "downto" case
             with open(self.filename, 'a') as f:
                 f.write(f"{loop_start_label}:\n")
            
-            command = f"pushg {self.stack[init_var_name]}\npushi {limit}\nsupeq\njz {loop_end_label}\n"
+            if self.in_function:
+                if limit is not None:
+                    command = f"pushl {self.function_stack[init_var_name]}\npushi {limit}\nsupeq\njz {loop_end_label}\n"
+                else:
+                    command = f"pushl {self.function_stack[init_var_name]}\npushl {self.function_stack[limit_name]}\nsupeq\njz {loop_end_label}\n"
+            else:
+                if limit is not None:
+                    command = f"pushg {self.stack[init_var_name]}\npushi {limit}\nsupeq\njz {loop_end_label}\n"
+                else:
+                    command = f"pushg {self.stack[init_var_name]}\npushg {self.stack[limit_name]}\nsupeq\njz {loop_end_label}\n"
+            
             with open(self.filename, 'a') as f:
                 f.write(command)
 
             self.visit(node.body)
             
-            command = f"pushg {self.stack[init_var_name]}\npushi 1\nsub\nstoreg {self.stack[init_var_name]}\n"
+            if self.in_function:
+                command = f"pushl {self.function_stack[init_var_name]}\npushi 1\nsub\nstorel {self.function_stack[init_var_name]}\n"
+            else:
+                command = f"pushg {self.stack[init_var_name]}\npushi 1\nsub\nstoreg {self.stack[init_var_name]}\n"
+            
             with open(self.filename, 'a') as f:
                 f.write(command)
 
@@ -300,7 +435,10 @@ class Generator:
     def visit_BinaryOp(self, node):
         if isinstance(node.left, Identifier):
             left_name = self.visit(node.left)
-            command = f"pushg {self.stack[left_name]}\n"
+            if self.in_function and left_name in self.function_stack:
+                command = f"pushl {self.function_stack[left_name]}\n"
+            else:
+                command = f"pushg {self.stack[left_name]}\n"
             with open(self.filename, 'a') as f:
                 f.write(command)
         elif isinstance(node.left, Literal):
@@ -316,7 +454,10 @@ class Generator:
 
             if self.types[array_name] == "string":
                pascal_index = self.visit(node.left.expression) 
-               command = f"pushg {self.stack[pascal_index]}\npushi 1\nsub\ncharat\n"
+               if self.in_function and pascal_index in self.function_stack:
+                   command = f"pushl {self.function_stack[pascal_index]}\npushi 1\nsub\ncharat\n"
+               else: 
+                   command = f"pushg {self.stack[pascal_index]}\npushi 1\nsub\ncharat\n"
                with open(self.filename, 'a') as f:
                    f.write(command)
         elif isinstance(node.left, BinaryOp):
@@ -329,7 +470,10 @@ class Generator:
                 f.write(command)
         elif isinstance(node.right, Identifier):
             right_name = self.visit(node.right)
-            command = f"pushg {self.stack[right_name]}\n"
+            if self.in_function and right_name in self.function_stack:
+                command = f"pushl {self.function_stack[right_name]}\n"
+            else:
+                command = f"pushg {self.stack[right_name]}\n"
             with open(self.filename, 'a') as f:
                 f.write(command)
         elif isinstance(node.right, Literal):
@@ -404,8 +548,6 @@ class Generator:
             with open(self.filename, 'a') as f:
                 f.write(command)
 
-
-
     def visit_Identifier(self, node):
         return node.name
 
@@ -420,3 +562,7 @@ class Generator:
 
     def visit_Type(self, node):
         return node.type_name
+
+    def visit_Parameter(self, node):
+        param_name = node.name
+        return param_name
