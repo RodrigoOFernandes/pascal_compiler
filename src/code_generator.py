@@ -405,7 +405,17 @@ class Generator:
         return None
 
     def visit_IfStatement(self, node):
-        self.visit(node.condition)
+        # Se a condição é apenas um Identifier, precisamos fazer push do seu valor
+        if isinstance(node.condition, Identifier):
+            var_name = self.visit(node.condition)
+            if self.in_function and var_name in self.function_stack:
+                command = f"pushl {self.function_stack[var_name]}\n"
+            else:
+                command = f"pushg {self.stack[var_name]}\n"
+            with open(self.filename, 'a') as f:
+                f.write(command)
+        else:
+            self.visit(node.condition)
 
         else_label = f"ELSE{self.if_counter}"
         end_if_label = f"ENDIF{self.if_counter}"

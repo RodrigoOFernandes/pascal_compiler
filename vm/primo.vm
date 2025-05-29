@@ -23,7 +23,7 @@ pushi 0
 equal
 jz ELSE0
 pushi 0
-storeg 3
+storeg 1
 jump ENDIF0
 ELSE0:
 ENDIF0:
@@ -33,6 +33,7 @@ add
 storeg 2
 jump WHILE0
 ENDWHILE0:
+pushg 1
 jz ELSE1
 pushg 0
 writei

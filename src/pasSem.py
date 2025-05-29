@@ -663,7 +663,6 @@ class ASTSemanticAnalyzer:
         return None
 
     def visit_ProcedureCall(self, node):
-        
         proc_symbol = self.current_scope.lookup(node.procedure_name)
         
         if not proc_symbol:
@@ -678,8 +677,6 @@ class ASTSemanticAnalyzer:
         
         if isinstance(proc_symbol, ProcedureSymbol):
             if proc_symbol.is_function:
-                
-                
                 pass  
         else:
             self.error(f"{node.procedure_name} is not a procedure or function")
