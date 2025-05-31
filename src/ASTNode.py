@@ -160,7 +160,7 @@ class RepeatStatement(ASTNode):
 class ForStatement(ASTNode):
     def __init__(self, init, direction, limit, body):
         self.init = init
-        self.direction = direction  # 'TO' or 'DOWNTO'
+        self.direction = direction 
         self.limit = limit
         self.body = body
     
