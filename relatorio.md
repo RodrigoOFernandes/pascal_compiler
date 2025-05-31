@@ -1,20 +1,20 @@
-#Compilador de Pascal Standard em Python
+# Compilador de Pascal Standard em Python
 
-##Introudução
+## Introudução
 Este projeto foi realizado com o objetivo de fazer um compilador para Pascal Standard usando a ferramnenta yacc do python. Começamos pelo analizador lexico, tendo sempre em conta os 7 testes de código Pascal que nos foram fornecidos, depois partimos para a escrita da gramática com construção da AST. que depois é otimizada. Por fim, realizamos análise sintática e a geração do código da maquina virtual.
 
-##Analizador Léxico
-###Definição dos Tokens
-###Expressões Regulares para Tokens Simples
-###Palavras Reservadas (Case-Insensitive)
-###Identificadores e Literais
-###Tratamento de Comentários e Espaços
-###Tratamento de Erros
-###Teste do Lexer test_lexer(data): 
+## Analizador Léxico
+### Definição dos Tokens
+### Expressões Regulares para Tokens Simples
+### Palavras Reservadas (Case-Insensitive)
+### Identificadores e Literais
+### Tratamento de Comentários e Espaços
+### Tratamento de Erros
+### Teste do Lexer test_lexer(data): 
 
-##Analizador Sintático
-###(FALAR DA GRAMATICA)
-###A AST (Abstract Syntax Tree) é uma representação hierárquica simplificada da estrutura sintática do código fonte, eliminando detalhes irrelevantes (como símbolos de pontuação) e mantendo apenas a lógica essencial do programa.
+## Analizador Sintático
+### (FALAR DA GRAMATICA)
+### A AST (Abstract Syntax Tree) é uma representação hierárquica simplificada da estrutura sintática do código fonte, eliminando detalhes irrelevantes (como símbolos de pontuação) e mantendo apenas a lógica essencial do programa.
 
 No analisador sintático fornecido, a AST é construída a cada regra de produção usando classes específicas (como Program, IfStatement, BinaryOp, etc.), que herdam de uma classe base ASTNode.
 
@@ -72,7 +72,7 @@ IfStatement(
     else_part=Assignment(Identifier("y"), Literal(0))
 )
 
-##Otimizador de AST
+## Otimizador de AST
 O otimizador percorre a Árvore Sintática Abstrata (AST) e aplica transformações para simplificar o código, removendo redundâncias e pré-calculando expressões sempre que possível.
 
 1. Estrutura do Otimizador
@@ -137,7 +137,7 @@ A AST é modificada in-place, com nós substituídos por versões otimizadas.
 Nós removidos (como loops mortos) são retornados como None e eliminados na etapa de reconstrução. 
 
 
-##Analizador Semântico 
+## Analizador Semântico 
 Este analisador semântico verifica a correção estática do código Pascal após a fase sintática, garantindo que:
 
 Todas as variáveis e funções estão declaradas antes do uso.
@@ -172,7 +172,7 @@ type_compatibility: Define quais tipos podem ser convertidos implicitamente (ex:
 
 operator_rules: Especifica os tipos válidos para cada operador (ex: + só funciona com INTEGER, REAL, ou STRING).
 
-##Gerador de Código
+## Gerador de Código
 Este módulo (Generator) é responsável por traduzir a AST (Árvore Sintática Abstrata) em código de máquina virtual, gerando um arquivo .vm que pode ser executado por uma máquina virtual simples.
 
 1. Funcionamento Geral
@@ -203,5 +203,5 @@ has_function: Indica se o programa tem funções/procedimentos.
 
 
 
-##Conclusão
+## Conclusão
 Embora tenhamos concluído o projeto com muitas funcionalidades, notamos que como o Pascal é uma linguagem com muitas particularidades podiamos sempre melhorar ou adicionar mais alguma coisa, como lidar com apontadores, maior variedade possibilidades na geração de código, etc. No entanto, consideramos este projeto uma grande oportunidade de aprendizagem não só sobre Pascal, mas também lingugaens de programçãp em geral.
