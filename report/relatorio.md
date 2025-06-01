@@ -664,7 +664,47 @@ writeln
 | `writeln`             | Imprime uma quebra de linha (`\n`) após a string.                                           |
 
 
+# Conclusão
 
+Este projeto representou uma oportunidade única de implementar um compilador completo para Pascal Standard, seguindo todas as fases clássicas da teoria de compiladores: análise léxica, análise sintática, otimização de AST, análise semântica e geração de código.
 
-## Conclusão
-Embora tenhamos concluído o projeto com muitas funcionalidades, notamos que como o Pascal é uma linguagem com muitas particularidades poderíamos sempre melhorar ou adicionar mais alguma coisa, como lidar com apontadores, maior variedade possibilidades na geração de código, etc. No entanto, consideramos este projeto uma grande oportunidade de aprendizagem não só sobre Pascal, mas também linguagens de programção em geral.
+## Principais Conquistas
+
+Durante o desenvolvimento, conseguimos implementar com sucesso:
+
+- **Pipeline completa de compilação** com arquitetura modular e bem estruturada
+- **Analisador léxico robusto** que trata adequadamente as particularidades do Pascal, incluindo palavras reservadas case-insensitive e diferentes tipos de comentários
+- **Analisador sintático** que constrói uma AST completa, resolvendo conflitos complexos como o "dangling else" e tratando declarações de variáveis após procedimentos/funções
+- **Otimizador de AST** que realiza simplificações importantes como avaliação de expressões constantes e eliminação de código morto
+- **Analisador semântico** que verifica tipos, escopos e correção estática do programa
+- **Gerador de código** que produz instruções para uma máquina virtual stack-based
+
+## Desafios Superados
+
+Os principais desafios enfrentados incluíram:
+
+- **Gestão de conflitos shift/reduce** na gramática, especialmente na distinção entre chamadas de função e identificadores
+- **Tratamento de escopos aninhados** para funções e procedimentos com suas variáveis locais
+- **Compatibilidade de tipos** e regras de conversão implícita entre INTEGER e REAL
+- **Geração de código eficiente** para estruturas de controlo como loops e condicionais
+
+## Limitações e Trabalho Futuro
+
+Embora tenhamos concluído o projeto com muitas funcionalidades implementadas, reconhecemos que o Pascal é uma linguagem rica em características. Algumas áreas que poderiam ser expandidas incluem:
+
+- **Suporte a ponteiros** e gestão dinâmica de memória
+- **Tipos de dados mais complexos** como records e sets
+- **Otimizações avançadas** no gerador de código
+- **Melhor tratamento de erros** com recuperação e mensagens mais informativas
+- **Suporte a bibliotecas externas** e módulos
+
+## Reflexão Final
+
+Este projeto proporcionou uma compreensão profunda não apenas da linguagem Pascal, mas dos princípios fundamentais que regem o design e implementação de linguagens de programação. A experiência de construir cada fase do compilador desde o zero ofereceu insights valiosos sobre:
+
+- A importância da modularidade na arquitetura de software complexo
+- As nuances entre análise sintática e semântica
+- O impacto das decisões de design na facilidade de implementação
+- A complexidade inerente na tradução entre níveis de abstração
+
+Consideramos este trabalho uma base sólida para futuros projetos em compiladores e uma demonstração prática dos conceitos teóricos estudados na disciplina.
