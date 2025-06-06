@@ -1,0 +1,14 @@
+pushi 5
+storeg 0
+pushg 0
+storeg 1
+pushs "x="
+writes
+pushg 0
+writei
+writeln
+pushs "x + 0 = "
+writes
+pushg 1
+writei
+writeln

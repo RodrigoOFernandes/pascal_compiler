@@ -130,10 +130,22 @@ class Generator:
 
     def visit_Assignment(self, node):
         target_name = self.visit(node.target)
+        print(node.value)
         if isinstance(node.value, Literal):
             value_type, value = self.visit(node.value)
-            if value_type == "NUMBER":
+            if value_type == "BOOLEAN":
                 value = int(value)
+                command = f"pushi {value}\n"
+                with open(self.filename, 'a') as f:
+                    f.write(command)
+                if target_name not in self.stack:
+                    self.stack[target_name] = self.op_stack_pos
+                    self.op_stack_pos += 1
+                
+                command = f"storeg {self.stack[target_name]}\n"
+                with open(self.filename, 'a') as f:
+                    f.write(command)
+            elif value_type == "NUMBER":
                 command = f"pushi {value}\n"
                 with open(self.filename, 'a') as f:
                     f.write(command)

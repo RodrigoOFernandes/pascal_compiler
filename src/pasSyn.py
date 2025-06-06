@@ -149,6 +149,7 @@ def p_array_type(t):
 
 def p_range(t):
     """range : expression RANGE expression"""
+    t[0] = Range(t[1], t[3])
 
 def p_statement_part(t):
     """statement_part : BEGIN statement_sequence END"""
@@ -366,13 +367,14 @@ def p_element(t):
                | length_function
                | ID LBRACKET expression RBRACKET
                | procedure_or_function_call"""
+
     if len(t) == 2:
         if isinstance(t[1], ASTNode):
             t[0] = t[1]
+        elif isinstance(t[1], bool):
+            t[0] = Literal(t[1], 'BOOLEAN')
         elif isinstance(t[1], (int, float)):
             t[0] = Literal(t[1], 'NUMBER')
-        elif t[1] in ('true', 'false'):
-            t[0] = Literal(t[1], 'BOOL')
         elif isinstance(t[1], str) and (t[1].startswith('"') or t[1].startswith("'")):
             t[0] = Literal(t[1], 'PHRASE')
         else:
@@ -416,7 +418,7 @@ def print_ast(node, indent=0):
     class_name = node.__class__.__name__
     
     attrs = []
-    for attr_name in dir(node):
+    for attr_name in node.__dict__:
         if attr_name.startswith('_') or callable(getattr(node, attr_name)):
             continue
         

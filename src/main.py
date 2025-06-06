@@ -18,6 +18,7 @@ def main():
         data = file.read()
     
     ast = parser.parse(data)
+    print(print_ast(ast))
     if not ast:
         print("Syntax analysis failed.")
         sys.exit(1)
